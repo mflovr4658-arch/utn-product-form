@@ -1,6 +1,7 @@
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEWHRDtzur0r4jgNQXC6jRRGn3c4RmQqPitJFPK4Ex0LXxZujpZq545l8WurQPP4PZw/exec";
 
+// Elements
 const form = document.getElementById("productForm");
 
 const fullNameInput = document.getElementById("fullName");
@@ -34,13 +35,14 @@ function showPopup(message, type = "success") {
 
   if (type === "success") {
     popupIcon.textContent = "✓";
-    popupTitle.textContent = "สำเร็จ";
+    popupTitle.textContent = "ส่งข้อมูลสำเร็จ!";
   } else {
     popupIcon.textContent = "!";
     popupTitle.textContent = "เกิดข้อผิดพลาด";
   }
 
   popupMessage.textContent = message;
+
   statusBox.hidden = false;
   statusBox.setAttribute("aria-hidden", "false");
 
@@ -92,6 +94,7 @@ function clearProductError() {
   productNameError.hidden = true;
 }
 
+// เมื่อเริ่มแก้ไขชื่อสินค้า ให้ล้างข้อความเตือน
 productInput.addEventListener("input", clearProductError);
 
 /* =========================
@@ -101,7 +104,9 @@ productInput.addEventListener("input", clearProductError);
 function sendRequest(params) {
   return new Promise((resolve, reject) => {
     const callbackName =
-      "productCallback_" + Date.now() + "_" +
+      "productCallback_" +
+      Date.now() +
+      "_" +
       Math.random().toString(36).slice(2);
 
     const script = document.createElement("script");
@@ -109,28 +114,26 @@ function sendRequest(params) {
     let finished = false;
 
     const timeout = setTimeout(() => {
-      finish();
+      if (!cleanup()) return;
       reject(new Error("หมดเวลารอการตอบกลับจากเซิร์ฟเวอร์"));
     }, 25000);
 
     function cleanup() {
+      if (finished) return false;
+
+      finished = true;
       clearTimeout(timeout);
       delete window[callbackName];
 
       if (script.parentNode) {
         script.parentNode.removeChild(script);
       }
-    }
 
-    function finish() {
-      if (finished) return false;
-      finished = true;
-      cleanup();
       return true;
     }
 
     window[callbackName] = function (result) {
-      if (!finish()) return;
+      if (!cleanup()) return;
       resolve(result);
     };
 
@@ -142,7 +145,7 @@ function sendRequest(params) {
     script.src = SCRIPT_URL + "?" + query.toString();
 
     script.onerror = function () {
-      if (!finish()) return;
+      if (!cleanup()) return;
       reject(new Error("ไม่สามารถเชื่อมต่อระบบได้"));
     };
 
@@ -160,43 +163,52 @@ form.addEventListener("submit", async function (event) {
   clearProductError();
 
   const fullName = fullNameInput.value.trim();
-  const department = departmentInput.value.trim();
+  const department = departmentInput.value;
   const productName = productInput.value.trim();
   const targetCustomer = targetCustomerInput.value.trim();
   const usageDetails = usageInput.value.trim();
 
-  if (!fullName || !department || !productName ||
-      !targetCustomer || !usageDetails) {
+  // ตรวจสอบข้อมูลที่จำเป็น
+  if (
+    !fullName ||
+    !department ||
+    !productName ||
+    !targetCustomer ||
+    !usageDetails
+  ) {
     form.reportValidity();
     return;
   }
 
+  // ป้องกันการกดส่งซ้ำ
   submitBtn.disabled = true;
-  submitText.textContent = "กำลังส่งข้อมูล...";
+  submitText.textContent = "กำลังตรวจสอบข้อมูล...";
 
   try {
     const result = await sendRequest({
       action: "submit",
-      fullName,
-      department,
-      productName,
-      targetCustomer,
-      usageDetails
+      fullName: fullName,
+      department: department,
+      productName: productName,
+      targetCustomer: targetCustomer,
+      usageDetails: usageDetails
     });
 
     if (!result || typeof result !== "object") {
       throw new Error("เซิร์ฟเวอร์ส่งข้อมูลกลับมาไม่ถูกต้อง");
     }
 
-    // ชื่อสินค้าซ้ำ: แจ้งเฉพาะใต้ช่อง ไม่เปิด Popup
+    // กรณีชื่อสินค้าซ้ำ
     if (result.duplicate === true) {
       showProductError(
-        result.message || "ชื่อสินค้านี้มีอยู่ในระบบแล้ว กรุณาใช้ชื่ออื่น"
+        result.message ||
+        "ชื่อสินค้านี้ถูกใช้ไปแล้ว กรุณาใช้ชื่ออื่น"
       );
+
       return;
     }
 
-    // บันทึกสำเร็จ
+    // กรณีบันทึกสำเร็จ
     if (result.success === true) {
       form.reset();
       clearProductError();
@@ -205,10 +217,11 @@ form.addEventListener("submit", async function (event) {
         result.message || "ส่งข้อมูลสำเร็จ! ระบบบันทึกข้อมูลเรียบร้อยแล้ว",
         "success"
       );
+
       return;
     }
 
-    // กรณีเซิร์ฟเวอร์ตอบกลับว่าไม่สำเร็จ
+    // กรณีเซิร์ฟเวอร์แจ้งว่าบันทึกไม่สำเร็จ
     throw new Error(
       result.message || "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง"
     );
@@ -217,7 +230,8 @@ form.addEventListener("submit", async function (event) {
     console.error("Submit error:", error);
 
     showPopup(
-      error.message || "เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่อีกครั้ง",
+      error.message ||
+      "เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่อีกครั้ง",
       "error"
     );
 
