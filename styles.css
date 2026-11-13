@@ -21,10 +21,10 @@ body {
 .form-card {
   width: 100%;
   max-width: 560px;
-  background: #ffffff;
-  border-radius: 16px;
   padding: 35px;
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, .08);
 }
 
 .form-header {
@@ -33,17 +33,17 @@ body {
 }
 
 .company-name {
+  margin-bottom: 12px;
   color: #2563eb;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 1.5px;
-  margin-bottom: 12px;
 }
 
 .form-header h1 {
-  font-size: 25px;
   margin: 0 0 10px;
   color: #172554;
+  font-size: 25px;
 }
 
 .form-header p {
@@ -58,9 +58,9 @@ body {
 
 .form-group label {
   display: block;
-  font-weight: 600;
-  font-size: 14px;
   margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .required {
@@ -68,29 +68,33 @@ body {
 }
 
 .form-group input,
+.form-group select,
 .form-group textarea {
   display: block;
   width: 100%;
   padding: 12px 14px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
+  background: #fff;
+  color: #1e293b;
   font-family: inherit;
   font-size: 14px;
   outline: none;
   transition: border-color .2s, box-shadow .2s;
-  background: #fff;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
   height: 46px;
 }
 
 .form-group textarea {
-  resize: vertical;
   min-height: 110px;
+  resize: vertical;
 }
 
 .form-group input:focus,
+.form-group select:focus,
 .form-group textarea:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, .10);
@@ -134,7 +138,7 @@ body {
   border: none;
   border-radius: 8px;
   background: #1d4ed8;
-  color: white;
+  color: #fff;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -151,10 +155,10 @@ body {
 }
 
 .form-footer {
-  text-align: center;
   margin-top: 25px;
   color: #94a3b8;
   font-size: 12px;
+  text-align: center;
 }
 
 /* Popup */
@@ -209,8 +213,8 @@ body {
 
 .popup-card h2 {
   margin: 0 0 10px;
-  font-size: 21px;
   color: #1e293b;
+  font-size: 21px;
 }
 
 .popup-card p {
