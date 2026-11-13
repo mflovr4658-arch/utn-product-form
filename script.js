@@ -1,204 +1,228 @@
-const SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbxEWHRDtzur0r4jgNQGXC6jRRGn3c4RmQqPitJFPK4Ex0LXxZujpZq545l8WurQPP4PZw/exec';
 
-// ========================================
-// 1. เชื่อมต่อ HTML Elements
-// ========================================
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEWHRDtzur0r4jgNQXC6jRRGn3c4RmQqPitJFPK4Ex0LXxZujpZq545l8WurQPP4PZw/exec";
 
-const form = document.getElementById('productForm');
-const fullNameInput = document.getElementById('fullName');
-const departmentInput = document.getElementById('department');
-const productInput = document.getElementById('productName');
-const targetCustomerInput = document.getElementById('targetCustomer');
-const usageInput = document.getElementById('usageDetails');
-const submitBtn = document.getElementById('submitBtn');
-const statusBox = document.getElementById('status');
+const form = document.getElementById("productForm");
 
-let isSubmitting = false;
+const fullNameInput = document.getElementById("fullName");
+const departmentInput = document.getElementById("department");
+const productInput = document.getElementById("productName");
+const targetCustomerInput = document.getElementById("targetCustomer");
+const usageInput = document.getElementById("usageDetails");
 
-// ตรวจสอบว่า HTML มี Element ครบหรือไม่
-if (
-  !form ||
-  !fullNameInput ||
-  !departmentInput ||
-  !productInput ||
-  !targetCustomerInput ||
-  !usageInput ||
-  !submitBtn ||
-  !statusBox
-) {
-  console.error('ไม่พบ HTML Element ที่จำเป็น กรุณาตรวจสอบ ID ใน index.html');
-  throw new Error('Form elements not found');
+const submitBtn = document.getElementById("submitBtn");
+const submitText = document.getElementById("submitText");
+
+const statusBox = document.getElementById("status");
+const popupIcon = document.getElementById("popupIcon");
+const popupTitle = document.getElementById("popupTitle");
+const popupMessage = document.getElementById("popupMessage");
+const popupClose = document.getElementById("popupClose");
+
+const productNameError = document.getElementById("productNameError");
+
+let previousFocus = null;
+
+/* =========================
+   POPUP
+========================= */
+
+function showPopup(message, type = "success") {
+  previousFocus = document.activeElement;
+
+  statusBox.classList.remove("success", "error");
+  statusBox.classList.add(type);
+
+  if (type === "success") {
+    popupIcon.textContent = "✓";
+    popupTitle.textContent = "สำเร็จ";
+  } else {
+    popupIcon.textContent = "!";
+    popupTitle.textContent = "เกิดข้อผิดพลาด";
+  }
+
+  popupMessage.textContent = message;
+  statusBox.hidden = false;
+  statusBox.setAttribute("aria-hidden", "false");
+
+  popupClose.focus();
 }
 
-// ========================================
-// 2. แสดงสถานะ
-// ========================================
+function hidePopup() {
+  statusBox.hidden = true;
+  statusBox.setAttribute("aria-hidden", "true");
 
-function showStatus(message, type) {
-  statusBox.textContent = message;
-  statusBox.className = 'status ' + type;
-  statusBox.style.display = 'block';
+  if (previousFocus && typeof previousFocus.focus === "function") {
+    previousFocus.focus();
+  }
 }
 
-function hideStatus() {
-  statusBox.textContent = '';
-  statusBox.className = 'status';
-  statusBox.style.display = 'none';
+popupClose.addEventListener("click", hidePopup);
+
+statusBox.addEventListener("click", function (event) {
+  if (event.target === statusBox) {
+    hidePopup();
+  }
+});
+
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape" && !statusBox.hidden) {
+    hidePopup();
+  }
+});
+
+/* =========================
+   DUPLICATE PRODUCT ERROR
+========================= */
+
+function showProductError(message) {
+  productInput.classList.add("input-error");
+  productInput.setAttribute("aria-invalid", "true");
+
+  productNameError.textContent = message;
+  productNameError.hidden = false;
+
+  productInput.focus();
 }
 
-// ========================================
-// 3. ส่งข้อมูลไป Google Apps Script
-// ========================================
+function clearProductError() {
+  productInput.classList.remove("input-error");
+  productInput.removeAttribute("aria-invalid");
+
+  productNameError.textContent = "";
+  productNameError.hidden = true;
+}
+
+productInput.addEventListener("input", clearProductError);
+
+/* =========================
+   SEND REQUEST (JSONP)
+========================= */
 
 function sendRequest(params) {
   return new Promise((resolve, reject) => {
     const callbackName =
-      'productCallback_' +
-      Date.now() +
-      '_' +
-      Math.floor(Math.random() * 1000000);
+      "productCallback_" + Date.now() + "_" +
+      Math.random().toString(36).slice(2);
 
-    const script = document.createElement('script');
-    let completed = false;
-    let timeout;
+    const script = document.createElement("script");
+
+    let finished = false;
+
+    const timeout = setTimeout(() => {
+      finish();
+      reject(new Error("หมดเวลารอการตอบกลับจากเซิร์ฟเวอร์"));
+    }, 25000);
 
     function cleanup() {
       clearTimeout(timeout);
-      script.remove();
       delete window[callbackName];
+
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
     }
 
-    function finish(callback, value) {
-      if (completed) return;
-
-      completed = true;
+    function finish() {
+      if (finished) return false;
+      finished = true;
       cleanup();
-      callback(value);
+      return true;
     }
 
-    window[callbackName] = function (response) {
-      finish(resolve, response);
+    window[callbackName] = function (result) {
+      if (!finish()) return;
+      resolve(result);
     };
 
     const query = new URLSearchParams({
       ...params,
-      callback: callbackName,
+      callback: callbackName
     });
 
-    script.src = SCRIPT_URL + '?' + query.toString();
+    script.src = SCRIPT_URL + "?" + query.toString();
 
     script.onerror = function () {
-      finish(reject, new Error('เชื่อมต่อ Google Apps Script ไม่สำเร็จ'));
+      if (!finish()) return;
+      reject(new Error("ไม่สามารถเชื่อมต่อระบบได้"));
     };
-
-    timeout = setTimeout(() => {
-      finish(reject, new Error('หมดเวลารอการตอบกลับจากระบบ'));
-    }, 25000);
 
     document.body.appendChild(script);
   });
 }
 
-// ========================================
-// 4. ส่งแบบฟอร์ม
-// ========================================
+/* =========================
+   FORM SUBMIT
+========================= */
 
-form.addEventListener('submit', async function (event) {
+form.addEventListener("submit", async function (event) {
   event.preventDefault();
 
-  if (isSubmitting) return;
+  clearProductError();
 
-  hideStatus();
+  const fullName = fullNameInput.value.trim();
+  const department = departmentInput.value.trim();
+  const productName = productInput.value.trim();
+  const targetCustomer = targetCustomerInput.value.trim();
+  const usageDetails = usageInput.value.trim();
 
-  const data = {
-    fullName: fullNameInput.value.trim(),
-    department: departmentInput.value,
-    productName: productInput.value.trim(),
-    targetCustomer: targetCustomerInput.value.trim(),
-    usageDetails: usageInput.value.trim(),
-  };
-
-  // ตรวจสอบข้อมูล
-  if (
-    !data.fullName ||
-    !data.department ||
-    !data.productName ||
-    !data.targetCustomer ||
-    !data.usageDetails
-  ) {
-    showStatus('กรุณากรอกข้อมูลให้ครบทุกช่อง', 'error');
+  if (!fullName || !department || !productName ||
+      !targetCustomer || !usageDetails) {
+    form.reportValidity();
     return;
   }
 
-  if (data.productName.length > 200) {
-    showStatus('ชื่อสินค้าต้องไม่เกิน 200 ตัวอักษร', 'error');
-    productInput.focus();
-    return;
-  }
-
-  // ป้องกันการกดส่งซ้ำ
-  isSubmitting = true;
   submitBtn.disabled = true;
-  submitBtn.textContent = 'กำลังส่งข้อมูล...';
+  submitText.textContent = "กำลังส่งข้อมูล...";
 
   try {
     const result = await sendRequest({
-      action: 'submit',
-      fullName: data.fullName,
-      department: data.department,
-      productName: data.productName,
-      targetCustomer: data.targetCustomer,
-      usageDetails: data.usageDetails,
+      action: "submit",
+      fullName,
+      department,
+      productName,
+      targetCustomer,
+      usageDetails
     });
 
-    if (!result || typeof result !== 'object') {
-      throw new Error('ข้อมูลตอบกลับจากระบบไม่ถูกต้อง');
+    if (!result || typeof result !== "object") {
+      throw new Error("เซิร์ฟเวอร์ส่งข้อมูลกลับมาไม่ถูกต้อง");
     }
 
-    // กรณีชื่อสินค้าซ้ำ
+    // ชื่อสินค้าซ้ำ: แจ้งเฉพาะใต้ช่อง ไม่เปิด Popup
     if (result.duplicate === true) {
-      showStatus('ชื่อสินค้านี้มีอยู่แล้ว กรุณากรอกชื่อสินค้าใหม่', 'warning');
-
-      productInput.focus();
-      productInput.select();
+      showProductError(
+        result.message || "ชื่อสินค้านี้มีอยู่ในระบบแล้ว กรุณาใช้ชื่ออื่น"
+      );
+      return;
     }
 
-    // กรณีบันทึกสำเร็จ
-    else if (result.success === true) {
-      showStatus('ส่งข้อมูลสำเร็จ!', 'success');
+    // บันทึกสำเร็จ
+    if (result.success === true) {
       form.reset();
+      clearProductError();
+
+      showPopup(
+        result.message || "ส่งข้อมูลสำเร็จ! ระบบบันทึกข้อมูลเรียบร้อยแล้ว",
+        "success"
+      );
+      return;
     }
 
-    // กรณีระบบตอบกลับว่าไม่สำเร็จ
-    else {
-      showStatus(result.message || 'ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่', 'error');
-    }
+    // กรณีเซิร์ฟเวอร์ตอบกลับว่าไม่สำเร็จ
+    throw new Error(
+      result.message || "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง"
+    );
+
   } catch (error) {
-    console.error('Submit Error:', error);
+    console.error("Submit error:", error);
 
-    showStatus('เกิดข้อผิดพลาด: ' + error.message, 'error');
+    showPopup(
+      error.message || "เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่อีกครั้ง",
+      "error"
+    );
+
   } finally {
-    isSubmitting = false;
     submitBtn.disabled = false;
-    submitBtn.textContent = 'ส่งข้อมูล';
+    submitText.textContent = "ส่งข้อมูล";
   }
 });
-
-// ========================================
-// 5. ล้างข้อความแจ้งเตือนเมื่อแก้ไขข้อมูล
-// ========================================
-
-form.addEventListener('input', function () {
-  if (!isSubmitting) hideStatus();
-});
-
-form.addEventListener('change', function () {
-  if (!isSubmitting) hideStatus();
-});
-
-// ========================================
-// 6. ตรวจสอบการโหลด JavaScript
-// ========================================
-
-console.log('UTN Product Form Loaded Successfully');
