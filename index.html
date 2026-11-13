@@ -1,208 +1,94 @@
-// index.js
 
-import './style.css';
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แบบฟอร์มเสนอสินค้าใหม่ | Union Thai-Nichiban</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="container">
 
-const SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbxEWHRDtzur0r4jgNQGXC6jRRGn3c4RmQqPitJFPK4Ex0LXxZujpZq545l8WurQPP4PZw/exec';
+    <header class="header">
+      <div class="logo">UTN</div>
+      <h1>แบบฟอร์มเสนอสินค้าใหม่</h1>
+      <p>กรุณากรอกข้อมูลให้ครบถ้วนเพื่อเสนอชื่อสินค้าใหม่</p>
+    </header>
 
-// ========================================
-// 1. เชื่อมต่อ HTML Elements
-// ========================================
+    <form id="productForm">
 
-const form = document.getElementById('productForm');
-const fullNameInput = document.getElementById('fullName');
-const departmentInput = document.getElementById('department');
-const productInput = document.getElementById('productName');
-const targetCustomerInput = document.getElementById('targetCustomer');
-const usageInput = document.getElementById('usageDetails');
-const submitBtn = document.getElementById('submitBtn');
-const statusBox = document.getElementById('status');
+      <div class="form-group">
+        <label for="fullName">ชื่อ - นามสกุล <span class="required">*</span></label>
+        <input type="text" id="fullName" name="fullName"
+          placeholder="กรอกชื่อและนามสกุล" maxlength="150" required>
+      </div>
 
-let isSubmitting = false;
+      <div class="form-group">
+        <label for="department">แผนก <span class="required">*</span></label>
+        <select id="department" name="department" required>
+          <option value="">-- เลือกแผนก --</option>
+          <option value="บุคคล">บุคคล</option>
+          <option value="หน่วยงานความปลอดภัย">หน่วยงานความปลอดภัย</option>
+          <option value="บัญชี">บัญชี</option>
+          <option value="การเงิน">การเงิน</option>
+          <option value="การตลาด">การตลาด</option>
+          <option value="จัดซื้อ">จัดซื้อ</option>
+          <option value="คลังสำเร็จรูป">คลังสำเร็จรูป</option>
+          <option value="คลังวัตถุดิบ">คลังวัตถุดิบ</option>
+          <option value="วางแผนผลิต">วางแผนผลิต</option>
+          <option value="ธุรการขายต่างประเทศ">ธุรการขายต่างประเทศ</option>
+          <option value="ขาย">ขาย</option>
+          <option value="บริหารคุณภาพ">บริหารคุณภาพ</option>
+          <option value="ควบคุมคุณภาพ">ควบคุมคุณภาพ</option>
+          <option value="ซ่อมบำรุง">ซ่อมบำรุง</option>
+          <option value="ส่วนผลิต">ส่วนผลิต</option>
+          <option value="มิกซ์ซิ่ง">มิกซ์ซิ่ง</option>
+          <option value="โค๊ดติ่ง">โค๊ดติ่ง</option>
+          <option value="สลิตติ่ง">สลิตติ่ง</option>
+          <option value="แพ็คกิ้ง">แพ็คกิ้ง</option>
+          <option value="สไลด์">สไลด์</option>
+          <option value="แกนกระดาษ">แกนกระดาษ</option>
+          <option value="วางแผนกลยุทธ์">วางแผนกลยุทธ์</option>
+          <option value="อื่นๆ">อื่นๆ</option>
+        </select>
+      </div>
 
-// ตรวจสอบว่า HTML มี Element ครบหรือไม่
-if (
-  !form ||
-  !fullNameInput ||
-  !departmentInput ||
-  !productInput ||
-  !targetCustomerInput ||
-  !usageInput ||
-  !submitBtn ||
-  !statusBox
-) {
-  console.error('ไม่พบ HTML Element ที่จำเป็น กรุณาตรวจสอบ ID ใน index.html');
-  throw new Error('Form elements not found');
-}
+      <div class="form-group">
+        <label for="productName">ชื่อสินค้า <span class="required">*</span></label>
+        <input type="text" id="productName" name="productName"
+          placeholder="กรอกชื่อสินค้าที่ต้องการเสนอ"
+          maxlength="200" required>
+        <small class="hint">ระบบจะตรวจสอบชื่อสินค้าซ้ำก่อนบันทึกข้อมูล</small>
+      </div>
 
-// ========================================
-// 2. แสดงสถานะ
-// ========================================
+      <div class="form-group">
+        <label for="targetCustomer">ลูกค้าเป้าหมาย <span class="required">*</span></label>
+        <textarea id="targetCustomer" name="targetCustomer"
+          placeholder="ระบุกลุ่มลูกค้าเป้าหมายของสินค้า"
+          rows="5" maxlength="2000" required></textarea>
+      </div>
 
-function showStatus(message, type) {
-  statusBox.textContent = message;
-  statusBox.className = 'status ' + type;
-  statusBox.style.display = 'block';
-}
+      <div class="form-group">
+        <label for="usageDetails">รายละเอียดการใช้งาน <span class="required">*</span></label>
+        <textarea id="usageDetails" name="usageDetails"
+          placeholder="อธิบายรายละเอียดการใช้งานของสินค้า"
+          rows="5" maxlength="2000" required></textarea>
+      </div>
 
-function hideStatus() {
-  statusBox.textContent = '';
-  statusBox.className = 'status';
-  statusBox.style.display = 'none';
-}
+      <div id="status" class="status" role="status"
+        aria-live="polite" style="display:none;"></div>
 
-// ========================================
-// 3. ส่งข้อมูลไป Google Apps Script
-// ========================================
+      <button type="submit" id="submitBtn">ส่งข้อมูล</button>
 
-function sendRequest(params) {
-  return new Promise((resolve, reject) => {
-    const callbackName =
-      'productCallback_' +
-      Date.now() +
-      '_' +
-      Math.floor(Math.random() * 1000000);
+    </form>
 
-    const script = document.createElement('script');
-    let completed = false;
-    let timeout;
+    <footer class="footer">
+      UNION THAI-NICHIBAN CO., LTD.
+    </footer>
 
-    function cleanup() {
-      clearTimeout(timeout);
-      script.remove();
-      delete window[callbackName];
-    }
+  </main>
 
-    function finish(callback, value) {
-      if (completed) return;
-
-      completed = true;
-      cleanup();
-      callback(value);
-    }
-
-    window[callbackName] = function (response) {
-      finish(resolve, response);
-    };
-
-    const query = new URLSearchParams({
-      ...params,
-      callback: callbackName,
-    });
-
-    script.src = SCRIPT_URL + '?' + query.toString();
-
-    script.onerror = function () {
-      finish(reject, new Error('เชื่อมต่อ Google Apps Script ไม่สำเร็จ'));
-    };
-
-    timeout = setTimeout(() => {
-      finish(reject, new Error('หมดเวลารอการตอบกลับจากระบบ'));
-    }, 25000);
-
-    document.body.appendChild(script);
-  });
-}
-
-// ========================================
-// 4. ส่งแบบฟอร์ม
-// ========================================
-
-form.addEventListener('submit', async function (event) {
-  event.preventDefault();
-
-  if (isSubmitting) return;
-
-  hideStatus();
-
-  const data = {
-    fullName: fullNameInput.value.trim(),
-    department: departmentInput.value,
-    productName: productInput.value.trim(),
-    targetCustomer: targetCustomerInput.value.trim(),
-    usageDetails: usageInput.value.trim(),
-  };
-
-  // ตรวจสอบข้อมูล
-  if (
-    !data.fullName ||
-    !data.department ||
-    !data.productName ||
-    !data.targetCustomer ||
-    !data.usageDetails
-  ) {
-    showStatus('กรุณากรอกข้อมูลให้ครบทุกช่อง', 'error');
-    return;
-  }
-
-  if (data.productName.length > 200) {
-    showStatus('ชื่อสินค้าต้องไม่เกิน 200 ตัวอักษร', 'error');
-    productInput.focus();
-    return;
-  }
-
-  // ป้องกันการกดส่งซ้ำ
-  isSubmitting = true;
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'กำลังส่งข้อมูล...';
-
-  try {
-    const result = await sendRequest({
-      action: 'submit',
-      fullName: data.fullName,
-      department: data.department,
-      productName: data.productName,
-      targetCustomer: data.targetCustomer,
-      usageDetails: data.usageDetails,
-    });
-
-    if (!result || typeof result !== 'object') {
-      throw new Error('ข้อมูลตอบกลับจากระบบไม่ถูกต้อง');
-    }
-
-    // กรณีชื่อสินค้าซ้ำ
-    if (result.duplicate === true) {
-      showStatus('ชื่อสินค้านี้มีอยู่แล้ว กรุณากรอกชื่อสินค้าใหม่', 'warning');
-
-      productInput.focus();
-      productInput.select();
-    }
-
-    // กรณีบันทึกสำเร็จ
-    else if (result.success === true) {
-      showStatus('ส่งข้อมูลสำเร็จ!', 'success');
-      form.reset();
-    }
-
-    // กรณีระบบตอบกลับว่าไม่สำเร็จ
-    else {
-      showStatus(result.message || 'ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่', 'error');
-    }
-  } catch (error) {
-    console.error('Submit Error:', error);
-
-    showStatus('เกิดข้อผิดพลาด: ' + error.message, 'error');
-  } finally {
-    isSubmitting = false;
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'ส่งข้อมูล';
-  }
-});
-
-// ========================================
-// 5. ล้างข้อความแจ้งเตือนเมื่อแก้ไขข้อมูล
-// ========================================
-
-form.addEventListener('input', function () {
-  if (!isSubmitting) hideStatus();
-});
-
-form.addEventListener('change', function () {
-  if (!isSubmitting) hideStatus();
-});
-
-// ========================================
-// 6. ตรวจสอบการโหลด JavaScript
-// ========================================
-
-console.log('UTN Product Form Loaded Successfully');
+  <script src="./script.js"></script>
+</body>
+</html>
