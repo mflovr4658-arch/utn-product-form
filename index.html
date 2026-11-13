@@ -76,7 +76,38 @@
           placeholder="อธิบายรายละเอียดการใช้งานของสินค้า"
           rows="5" maxlength="2000" required></textarea>
       </div>
-<div id="status" class="status" role="status" aria-live="polite"></div>
+
+      
+<!-- POPUP NOTIFICATION -->
+<div
+  id="status"
+  class="status"
+  role="alertdialog"
+  aria-modal="true"
+  aria-labelledby="popupTitle"
+  aria-describedby="popupMessage"
+  aria-live="assertive"
+  style="display: none;"
+>
+  <div class="popup-card">
+    <div id="popupIcon" class="popup-icon">✓</div>
+
+    <div class="popup-content">
+      <h2 id="popupTitle">แจ้งเตือน</h2>
+      <p id="popupMessage"></p>
+    </div>
+
+    <button
+      type="button"
+      id="popupClose"
+      class="popup-close"
+    >
+      ตกลง
+    </button>
+  </div>
+</div>
+<!-- END POPUP NOTIFICATION -->
+
      
 
       <button type="submit" id="submitBtn">ส่งข้อมูล</button>
