@@ -11,10 +11,9 @@
 <body>
 
   <!-- =================================
-       หน้าแรก: แสดงรูปภาพก่อนเข้าแบบฟอร์ม
+       หน้าแรก
   ================================== -->
   <section id="welcomePage" class="welcome-page">
-
     <div class="welcome-container">
 
       <img
@@ -32,7 +31,6 @@
       </button>
 
     </div>
-
   </section>
 
 
@@ -44,18 +42,41 @@
     <section class="form-card">
 
       <header class="form-header">
-
-       
         <div class="company-name">UNION THAI-NICHIBAN</div>
-
         <h1>แบบฟอร์มเสนอสินค้าใหม่</h1>
-
         <p>กรุณากรอกข้อมูลให้ครบถ้วนก่อนส่งแบบฟอร์ม</p>
-
       </header>
 
 
       <form id="productForm">
+
+        <!-- รหัสพนักงาน -->
+        <div class="form-group">
+
+          <label for="employeeID">
+            รหัสพนักงาน <span class="required">*</span>
+          </label>
+
+          <input
+            type="text"
+            id="employeeID"
+            name="employeeID"
+            placeholder="กรอกรหัสพนักงาน"
+            maxlength="30"
+            autocomplete="off"
+            aria-describedby="employeeIDError"
+            required
+          >
+
+          <small
+            id="employeeIDError"
+            class="field-error"
+            role="alert"
+            hidden
+          ></small>
+
+        </div>
+
 
         <!-- ชื่อ-นามสกุล -->
         <div class="form-group">
@@ -68,7 +89,7 @@
             type="text"
             id="fullName"
             name="fullName"
-            placeholder="กรอกชื่อ-นามสกุล"
+            placeholder="กรอกชื่อ-นามสกุลเต็ม"
             maxlength="150"
             autocomplete="name"
             aria-describedby="fullNameError"
@@ -92,35 +113,18 @@
             แผนก <span class="required">*</span>
           </label>
 
-          <select id="department" name="department" required>
+          <input
+            type="text"
+            id="department"
+            name="department"
+            placeholder="ระบบจะแสดงแผนกอัตโนมัติ"
+            readonly
+            required
+          >
 
-            <option value="">-- กรุณาเลือกแผนก --</option>
-
-            <option value="บุคคล">บุคคล</option>
-            <option value="หน่วยงานความปลอดภัย">หน่วยงานความปลอดภัย</option>
-            <option value="บัญชี">บัญชี</option>
-            <option value="การเงิน">การเงิน</option>
-            <option value="การตลาด">การตลาด</option>
-            <option value="จัดซื้อ">จัดซื้อ</option>
-            <option value="คลังสำเร็จรูป">คลังสำเร็จรูป</option>
-            <option value="คลังวัตถุดิบ">คลังวัตถุดิบ</option>
-            <option value="วางแผนผลิต">วางแผนผลิต</option>
-            <option value="ธุรการขายต่างประเทศ">ธุรการขายต่างประเทศ</option>
-            <option value="ขาย">ขาย</option>
-            <option value="บริหารคุณภาพ">บริหารคุณภาพ</option>
-            <option value="ควบคุมคุณภาพ">ควบคุมคุณภาพ</option>
-            <option value="ซ่อมบำรุง">ซ่อมบำรุง</option>
-            <option value="ส่วนผลิต">ส่วนผลิต</option>
-            <option value="มิกซ์ซิ่ง">มิกซ์ซิ่ง</option>
-            <option value="โค๊ดติ่ง">โค๊ดติ่ง</option>
-            <option value="สลิตติ่ง">สลิตติ่ง</option>
-            <option value="แพ็คกิ้ง">แพ็คกิ้ง</option>
-            <option value="สไลด์">สไลด์</option>
-            <option value="แกนกระดาษ">แกนกระดาษ</option>
-            <option value="วางแผนกลยุทธ์">วางแผนกลยุทธ์</option>
-            <option value="อื่นๆ">อื่นๆ</option>
-
-          </select>
+          <small class="hint">
+            ระบบจะค้นหาแผนกจากข้อมูลพนักงานโดยอัตโนมัติ
+          </small>
 
         </div>
 
@@ -217,7 +221,7 @@
 
 
   <!-- =================================
-       Popup แจ้งผลการส่งข้อมูล
+       Popup แจ้งผล
   ================================== -->
   <div
     id="status"
