@@ -1,4 +1,8 @@
 
+/* ==================================================
+   1. GLOBAL
+================================================== */
+
 * {
   box-sizing: border-box;
 }
@@ -9,6 +13,80 @@ body {
   background: #f3f6fb;
   color: #1e293b;
 }
+
+/* ซ่อนหน้าที่ไม่ได้ใช้งาน */
+#welcomePage[hidden],
+#formPage[hidden],
+.status[hidden] {
+  display: none !important;
+}
+
+
+/* ==================================================
+   2. WELCOME PAGE
+================================================== */
+
+.welcome-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  background: #f3f6fb;
+}
+
+.welcome-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.welcome-image {
+  display: block;
+  width: 100%;
+  max-height: 75vh;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  margin: 0 auto 25px;
+}
+
+/* ปุ่มเข้าสู่แบบฟอร์ม */
+.enter-form-btn {
+  min-width: 220px;
+  min-height: 50px;
+  padding: 13px 35px;
+  border: none;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s, transform .2s;
+}
+
+.enter-form-btn:hover {
+  background: #1e40af;
+  transform: translateY(-2px);
+}
+
+.enter-form-btn:active {
+  transform: translateY(0);
+}
+
+.enter-form-btn:focus-visible,
+.back-home-btn:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .35);
+  outline-offset: 3px;
+}
+
+
+/* ==================================================
+   3. FORM PAGE
+================================================== */
 
 .page-container {
   min-height: 100vh;
@@ -26,6 +104,11 @@ body {
   border-radius: 16px;
   box-shadow: 0 8px 30px rgba(15, 23, 42, .08);
 }
+
+
+/* ==================================================
+   4. FORM HEADER
+================================================== */
 
 .form-header {
   text-align: center;
@@ -51,6 +134,31 @@ body {
   color: #64748b;
   font-size: 14px;
 }
+
+/* ปุ่มกลับหน้าหลัก */
+.back-home-btn {
+  display: block;
+  margin: 0 auto 22px;
+  padding: 9px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #fff;
+  color: #334155;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+}
+
+.back-home-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+
+/* ==================================================
+   5. FORM GROUP
+================================================== */
 
 .form-group {
   margin-bottom: 21px;
@@ -100,6 +208,11 @@ body {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, .10);
 }
 
+
+/* ==================================================
+   6. DUPLICATE ERROR
+================================================== */
+
 .form-group input.input-error {
   border: 1.5px solid #dc2626;
   background: #fff7f7;
@@ -109,13 +222,6 @@ body {
 .form-group input.input-error:focus {
   border-color: #dc2626;
   box-shadow: 0 0 0 3px rgba(220, 38, 38, .12);
-}
-
-.hint {
-  display: block;
-  margin-top: 7px;
-  color: #64748b;
-  font-size: 12px;
 }
 
 .field-error {
@@ -130,6 +236,18 @@ body {
 .field-error[hidden] {
   display: none;
 }
+
+.hint {
+  display: block;
+  margin-top: 7px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+
+/* ==================================================
+   7. SUBMIT BUTTON
+================================================== */
 
 .submit-btn {
   width: 100%;
@@ -154,6 +272,11 @@ body {
   cursor: not-allowed;
 }
 
+
+/* ==================================================
+   8. FOOTER
+================================================== */
+
 .form-footer {
   margin-top: 25px;
   color: #94a3b8;
@@ -161,7 +284,11 @@ body {
   text-align: center;
 }
 
-/* Popup */
+
+/* ==================================================
+   9. POPUP
+================================================== */
+
 .status {
   position: fixed;
   inset: 0;
@@ -172,10 +299,6 @@ body {
   padding: 20px;
   background: rgba(15, 23, 42, .62);
   backdrop-filter: blur(4px);
-}
-
-.status[hidden] {
-  display: none;
 }
 
 .popup-card {
@@ -237,38 +360,68 @@ body {
   cursor: pointer;
 }
 
+.popup-close:hover {
+  background: #1e40af;
+}
+
 .status.error .popup-close {
   background: #dc2626;
 }
 
-.input-error {
-  border: 1px solid #dc3545 !important;
-  outline-color: #dc3545;
-}
 
-.field-error {
-  display: block;
-  color: #dc3545;
-  font-size: 13px;
-  margin-top: 6px;
-}
-
-.field-error[hidden] {
-  display: none;
-}
+/* ==================================================
+   10. ANIMATION
+================================================== */
 
 @keyframes popupIn {
   from {
     opacity: 0;
     transform: translateY(10px) scale(.97);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
+
+/* ==================================================
+   11. RESPONSIVE - TABLET & MOBILE
+================================================== */
+
+@media (max-width: 768px) {
+
+  .welcome-page {
+    padding: 20px 15px;
+  }
+
+  .welcome-image {
+    max-height: 70vh;
+  }
+
+}
+
 @media (max-width: 600px) {
+
+  .welcome-page {
+    padding: 15px;
+  }
+
+  .welcome-image {
+    max-height: 65vh;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+
+  .enter-form-btn {
+    width: 100%;
+  }
+
+  .page-container {
+    padding: 20px 12px;
+  }
+
   .form-card {
     padding: 25px 20px;
   }
@@ -276,4 +429,10 @@ body {
   .form-header h1 {
     font-size: 21px;
   }
+
+  .back-home-btn {
+    margin-bottom: 18px;
+  }
+
 }
+
