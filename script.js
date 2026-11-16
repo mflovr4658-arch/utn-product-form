@@ -5,6 +5,13 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEWHRDtzur0r4jgNQGX
 // 1. ELEMENTS
 // ==================================================
 
+// Page Navigation
+const welcomePage = document.getElementById("welcomePage");
+const formPage = document.getElementById("formPage");
+const enterFormBtn = document.getElementById("enterFormBtn");
+const backHomeBtn = document.getElementById("backHomeBtn");
+
+// Form Elements
 const form = document.getElementById("productForm");
 
 const fullNameInput = document.getElementById("fullName");
@@ -16,19 +23,53 @@ const usageInput = document.getElementById("usageDetails");
 const submitBtn = document.getElementById("submitBtn");
 const submitText = document.getElementById("submitText");
 
+// Popup Elements
 const statusBox = document.getElementById("status");
 const popupIcon = document.getElementById("popupIcon");
 const popupTitle = document.getElementById("popupTitle");
 const popupMessage = document.getElementById("popupMessage");
 const popupClose = document.getElementById("popupClose");
 
+// Error Elements
 const productNameError = document.getElementById("productNameError");
 const fullNameError = document.getElementById("fullNameError");
 
 let previousFocus = null;
 
+
 // ==================================================
-// 2. POPUP
+// 2. PAGE NAVIGATION
+// ==================================================
+
+// เข้าสู่หน้าแบบฟอร์ม
+enterFormBtn.addEventListener("click", function () {
+
+  welcomePage.hidden = true;
+  formPage.hidden = false;
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
+});
+
+// กลับไปหน้าแรก
+backHomeBtn.addEventListener("click", function () {
+
+  formPage.hidden = true;
+  welcomePage.hidden = false;
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
+});
+
+
+// ==================================================
+// 3. POPUP
 // ==================================================
 
 function showPopup(message, type = "success") {
@@ -39,11 +80,15 @@ function showPopup(message, type = "success") {
   statusBox.classList.add(type);
 
   if (type === "success") {
+
     popupIcon.textContent = "✓";
     popupTitle.textContent = "ส่งข้อมูลสำเร็จ!";
+
   } else {
+
     popupIcon.textContent = "!";
     popupTitle.textContent = "เกิดข้อผิดพลาด";
+
   }
 
   popupMessage.textContent = message;
@@ -52,6 +97,7 @@ function showPopup(message, type = "success") {
   statusBox.setAttribute("aria-hidden", "false");
 
   popupClose.focus();
+
 }
 
 function hidePopup() {
@@ -62,24 +108,30 @@ function hidePopup() {
   if (previousFocus && typeof previousFocus.focus === "function") {
     previousFocus.focus();
   }
+
 }
 
 popupClose.addEventListener("click", hidePopup);
 
 statusBox.addEventListener("click", function (event) {
+
   if (event.target === statusBox) {
     hidePopup();
   }
+
 });
 
 document.addEventListener("keydown", function (event) {
+
   if (event.key === "Escape" && !statusBox.hidden) {
     hidePopup();
   }
+
 });
 
+
 // ==================================================
-// 3. DUPLICATE FULL NAME ERROR
+// 4. DUPLICATE FULL NAME ERROR
 // ==================================================
 
 function showFullNameError(message) {
@@ -106,8 +158,9 @@ function clearFullNameError() {
 
 }
 
+
 // ==================================================
-// 4. DUPLICATE PRODUCT ERROR
+// 5. DUPLICATE PRODUCT ERROR
 // ==================================================
 
 function showProductError(message) {
@@ -134,17 +187,21 @@ function clearProductError() {
 fullNameInput.addEventListener("input", clearFullNameError);
 productInput.addEventListener("input", clearProductError);
 
+
 // ==================================================
-// 5. CLEAR ALL DUPLICATE ERRORS
+// 6. CLEAR ALL DUPLICATE ERRORS
 // ==================================================
 
 function clearAllErrors() {
+
   clearFullNameError();
   clearProductError();
+
 }
 
+
 // ==================================================
-// 6. SEND REQUEST (JSONP)
+// 7. SEND REQUEST (JSONP)
 // ==================================================
 
 function sendRequest(params) {
@@ -184,6 +241,7 @@ function sendRequest(params) {
       }
 
       return true;
+
     }
 
     window[callbackName] = function (result) {
@@ -215,8 +273,9 @@ function sendRequest(params) {
 
 }
 
+
 // ==================================================
-// 7. FORM SUBMIT
+// 8. FORM SUBMIT
 // ==================================================
 
 form.addEventListener("submit", async function (event) {
