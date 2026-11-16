@@ -4,25 +4,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
   <title>แบบฟอร์มเสนอสินค้าใหม่ | Union Thai-Nichiban</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <main class="page-container">
+
+  <!-- =================================
+       หน้าแรก: แสดงรูปภาพก่อนเข้าแบบฟอร์ม
+  ================================== -->
+  <section id="welcomePage" class="welcome-page">
+
+    <div class="welcome-container">
+
+      <img
+        src="./images/welcome.jpg"
+        alt="Union Thai-Nichiban"
+        class="welcome-image"
+      >
+
+      <button
+        type="button"
+        id="enterFormBtn"
+        class="enter-form-btn"
+      >
+        เข้าสู่แบบฟอร์ม
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- =================================
+       หน้าแบบฟอร์มเสนอสินค้าใหม่
+  ================================== -->
+  <main id="formPage" class="page-container" hidden>
+
     <section class="form-card">
+
       <header class="form-header">
+
+        <button
+          type="button"
+          id="backHomeBtn"
+          class="back-home-btn"
+        >
+          ← กลับหน้าหลัก
+        </button>
+
         <div class="company-name">UNION THAI-NICHIBAN</div>
+
         <h1>แบบฟอร์มเสนอสินค้าใหม่</h1>
+
         <p>กรุณากรอกข้อมูลให้ครบถ้วนก่อนส่งแบบฟอร์ม</p>
+
       </header>
+
 
       <form id="productForm">
 
         <!-- ชื่อ-นามสกุล -->
         <div class="form-group">
+
           <label for="fullName">
             ชื่อ-นามสกุล <span class="required">*</span>
           </label>
+
           <input
             type="text"
             id="fullName"
@@ -33,21 +81,28 @@
             aria-describedby="fullNameError"
             required
           >
+
           <small
             id="fullNameError"
             class="field-error"
             role="alert"
             hidden
           ></small>
+
         </div>
+
 
         <!-- แผนก -->
         <div class="form-group">
+
           <label for="department">
             แผนก <span class="required">*</span>
           </label>
+
           <select id="department" name="department" required>
+
             <option value="">-- กรุณาเลือกแผนก --</option>
+
             <option value="บุคคล">บุคคล</option>
             <option value="หน่วยงานความปลอดภัย">หน่วยงานความปลอดภัย</option>
             <option value="บัญชี">บัญชี</option>
@@ -71,14 +126,19 @@
             <option value="แกนกระดาษ">แกนกระดาษ</option>
             <option value="วางแผนกลยุทธ์">วางแผนกลยุทธ์</option>
             <option value="อื่นๆ">อื่นๆ</option>
+
           </select>
+
         </div>
+
 
         <!-- ชื่อสินค้า -->
         <div class="form-group">
+
           <label for="productName">
             ชื่อสินค้า <span class="required">*</span>
           </label>
+
           <input
             type="text"
             id="productName"
@@ -89,22 +149,28 @@
             aria-describedby="productNameError"
             required
           >
+
           <small class="hint">
             ระบบจะตรวจสอบชื่อสินค้าซ้ำก่อนบันทึกข้อมูล
           </small>
+
           <small
             id="productNameError"
             class="field-error"
             role="alert"
             hidden
           ></small>
+
         </div>
+
 
         <!-- ลูกค้าเป้าหมาย -->
         <div class="form-group">
+
           <label for="targetCustomer">
             ลูกค้าเป้าหมาย <span class="required">*</span>
           </label>
+
           <input
             type="text"
             id="targetCustomer"
@@ -113,13 +179,17 @@
             maxlength="200"
             required
           >
+
         </div>
+
 
         <!-- รายละเอียดการใช้งาน -->
         <div class="form-group">
+
           <label for="usageDetails">
             รายละเอียดการใช้งาน <span class="required">*</span>
           </label>
+
           <textarea
             id="usageDetails"
             name="usageDetails"
@@ -128,22 +198,34 @@
             maxlength="2000"
             required
           ></textarea>
+
         </div>
 
+
         <!-- ปุ่มส่งข้อมูล -->
-        <button type="submit" id="submitBtn" class="submit-btn">
+        <button
+          type="submit"
+          id="submitBtn"
+          class="submit-btn"
+        >
           <span id="submitText">ส่งข้อมูล</span>
         </button>
 
       </form>
 
+
       <footer class="form-footer">
         Union Thai-Nichiban Co., Ltd.
       </footer>
+
     </section>
+
   </main>
 
-  <!-- Popup แจ้งผล -->
+
+  <!-- =================================
+       Popup แจ้งผลการส่งข้อมูล
+  ================================== -->
   <div
     id="status"
     class="status"
@@ -154,16 +236,34 @@
     aria-hidden="true"
     hidden
   >
+
     <div class="popup-card">
-      <div id="popupIcon" class="popup-icon" aria-hidden="true">✓</div>
+
+      <div
+        id="popupIcon"
+        class="popup-icon"
+        aria-hidden="true"
+      >✓</div>
+
       <h2 id="popupTitle">แจ้งเตือน</h2>
+
       <p id="popupMessage"></p>
-      <button type="button" id="popupClose" class="popup-close">
+
+      <button
+        type="button"
+        id="popupClose"
+        class="popup-close"
+      >
         ตกลง
       </button>
+
     </div>
+
   </div>
 
+
+  <!-- JavaScript -->
   <script src="./script.js"></script>
+
 </body>
 </html>
