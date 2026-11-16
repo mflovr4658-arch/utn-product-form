@@ -17,8 +17,12 @@
       </header>
 
       <form id="productForm">
+
+        <!-- ชื่อ-นามสกุล -->
         <div class="form-group">
-          <label for="fullName">ชื่อ-นามสกุล <span class="required">*</span></label>
+          <label for="fullName">
+            ชื่อ-นามสกุล <span class="required">*</span>
+          </label>
           <input
             type="text"
             id="fullName"
@@ -26,12 +30,22 @@
             placeholder="กรอกชื่อ-นามสกุล"
             maxlength="150"
             autocomplete="name"
+            aria-describedby="fullNameError"
             required
           >
+          <small
+            id="fullNameError"
+            class="field-error"
+            role="alert"
+            hidden
+          ></small>
         </div>
 
+        <!-- แผนก -->
         <div class="form-group">
-          <label for="department">แผนก <span class="required">*</span></label>
+          <label for="department">
+            แผนก <span class="required">*</span>
+          </label>
           <select id="department" name="department" required>
             <option value="">-- กรุณาเลือกแผนก --</option>
             <option value="บุคคล">บุคคล</option>
@@ -60,8 +74,11 @@
           </select>
         </div>
 
+        <!-- ชื่อสินค้า -->
         <div class="form-group">
-          <label for="productName">ชื่อสินค้า <span class="required">*</span></label>
+          <label for="productName">
+            ชื่อสินค้า <span class="required">*</span>
+          </label>
           <input
             type="text"
             id="productName"
@@ -72,12 +89,22 @@
             aria-describedby="productNameError"
             required
           >
-          <small class="hint">ระบบจะตรวจสอบชื่อสินค้าซ้ำก่อนบันทึกข้อมูล</small>
-          <small id="productNameError" class="field-error" role="alert" hidden></small>
+          <small class="hint">
+            ระบบจะตรวจสอบชื่อสินค้าซ้ำก่อนบันทึกข้อมูล
+          </small>
+          <small
+            id="productNameError"
+            class="field-error"
+            role="alert"
+            hidden
+          ></small>
         </div>
 
+        <!-- ลูกค้าเป้าหมาย -->
         <div class="form-group">
-          <label for="targetCustomer">ลูกค้าเป้าหมาย <span class="required">*</span></label>
+          <label for="targetCustomer">
+            ลูกค้าเป้าหมาย <span class="required">*</span>
+          </label>
           <input
             type="text"
             id="targetCustomer"
@@ -88,8 +115,11 @@
           >
         </div>
 
+        <!-- รายละเอียดการใช้งาน -->
         <div class="form-group">
-          <label for="usageDetails">รายละเอียดการใช้งาน <span class="required">*</span></label>
+          <label for="usageDetails">
+            รายละเอียดการใช้งาน <span class="required">*</span>
+          </label>
           <textarea
             id="usageDetails"
             name="usageDetails"
@@ -100,9 +130,11 @@
           ></textarea>
         </div>
 
+        <!-- ปุ่มส่งข้อมูล -->
         <button type="submit" id="submitBtn" class="submit-btn">
           <span id="submitText">ส่งข้อมูล</span>
         </button>
+
       </form>
 
       <footer class="form-footer">
@@ -126,7 +158,9 @@
       <div id="popupIcon" class="popup-icon" aria-hidden="true">✓</div>
       <h2 id="popupTitle">แจ้งเตือน</h2>
       <p id="popupMessage"></p>
-      <button type="button" id="popupClose" class="popup-close">ตกลง</button>
+      <button type="button" id="popupClose" class="popup-close">
+        ตกลง
+      </button>
     </div>
   </div>
 
