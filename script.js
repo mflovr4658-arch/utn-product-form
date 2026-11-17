@@ -27,6 +27,7 @@ const popupIcon = document.getElementById("popupIcon");
 const popupTitle = document.getElementById("popupTitle");
 const popupMessage = document.getElementById("popupMessage");
 const popupClose = document.getElementById("popupClose");
+const loadingIndicator = document.getElementById("loadingIndicator");
 
 const fullNameError = document.getElementById("fullNameError");
 const productNameError = document.getElementById("productNameError");
@@ -34,6 +35,7 @@ const productNameError = document.getElementById("productNameError");
 let previousFocus = null;
 let employeeVerified = false;
 let employeeLookupSequence = 0;
+let isSubmitting = false;
 
 
 // ==================================================
@@ -57,34 +59,96 @@ enterFormBtn.addEventListener("click", function () {
 // 3. POPUP
 // ==================================================
 
-function showPopup(message, type = "success") {
+function openPopup() {
+
+    statusBox.hidden = false;
+    statusBox.setAttribute("aria-hidden", "false");
+
+}
+
+
+// Popup ระหว่างกำลังส่งข้อมูล
+function showLoadingPopup() {
 
     previousFocus = document.activeElement;
 
     statusBox.classList.remove("success", "error");
+    statusBox.classList.add("loading");
+
+    popupIcon.textContent = "";
+    popupTitle.textContent = "กำลังส่งข้อมูล...";
+    popupMessage.textContent =
+        "กรุณารอสักครู่ ระบบกำลังบันทึกข้อมูลของคุณ";
+
+    if (loadingIndicator) {
+        loadingIndicator.hidden = false;
+    }
+
+    popupClose.hidden = true;
+
+    openPopup();
+
+    // ป้องกันการปิด Popup ระหว่างส่งข้อมูล
+    statusBox.setAttribute("tabindex", "-1");
+    statusBox.focus();
+
+}
+
+
+// Popup แจ้งผลสำเร็จหรือผิดพลาด
+function showPopup(message, type = "success") {
+
+    // เก็บตำแหน่ง Focus เฉพาะตอนเปิด Popup ใหม่
+    if (statusBox.hidden) {
+        previousFocus = document.activeElement;
+    }
+
+    statusBox.classList.remove("success", "error", "loading");
     statusBox.classList.add(type);
 
     if (type === "success") {
+
         popupIcon.textContent = "✓";
         popupTitle.textContent = "ส่งข้อมูลสำเร็จ!";
+
     } else {
+
         popupIcon.textContent = "!";
         popupTitle.textContent = "เกิดข้อผิดพลาด";
+
     }
 
     popupMessage.textContent = message;
 
-    statusBox.hidden = false;
-    statusBox.setAttribute("aria-hidden", "false");
+    if (loadingIndicator) {
+        loadingIndicator.hidden = true;
+    }
+
+    popupClose.hidden = false;
+
+    openPopup();
 
     popupClose.focus();
 
 }
 
-function hidePopup() {
+
+// ปิด Popup
+function hidePopup(force = false) {
+
+    // ห้ามปิดขณะกำลังส่งข้อมูล
+    if (isSubmitting && !force) {
+        return;
+    }
 
     statusBox.hidden = true;
     statusBox.setAttribute("aria-hidden", "true");
+
+    if (loadingIndicator) {
+        loadingIndicator.hidden = true;
+    }
+
+    popupClose.hidden = false;
 
     if (previousFocus && typeof previousFocus.focus === "function") {
         previousFocus.focus();
@@ -92,8 +156,16 @@ function hidePopup() {
 
 }
 
-popupClose.addEventListener("click", hidePopup);
 
+// ปุ่มตกลง
+popupClose.addEventListener("click", function () {
+
+    hidePopup();
+
+});
+
+
+// คลิกพื้นหลังเพื่อปิด Popup
 statusBox.addEventListener("click", function (event) {
 
     if (event.target === statusBox) {
@@ -102,6 +174,8 @@ statusBox.addEventListener("click", function (event) {
 
 });
 
+
+// กด Escape เพื่อปิด Popup
 document.addEventListener("keydown", function (event) {
 
     if (event.key === "Escape" && !statusBox.hidden) {
@@ -125,6 +199,7 @@ function showFullNameError(message) {
 
 }
 
+
 function clearFullNameError() {
 
     fullNameInput.classList.remove("input-error");
@@ -134,6 +209,7 @@ function clearFullNameError() {
     fullNameError.hidden = true;
 
 }
+
 
 function showProductError(message) {
 
@@ -145,6 +221,7 @@ function showProductError(message) {
 
 }
 
+
 function clearProductError() {
 
     productInput.classList.remove("input-error");
@@ -154,6 +231,7 @@ function clearProductError() {
     productNameError.hidden = true;
 
 }
+
 
 function clearAllErrors() {
 
@@ -177,13 +255,16 @@ function clearEmployeeData() {
 
 }
 
+
 async function lookupEmployee() {
 
     const searchValue = fullNameInput.value.trim();
 
     if (!searchValue) {
+
         clearEmployeeData();
         return;
+
     }
 
     const currentSequence = ++employeeLookupSequence;
@@ -198,8 +279,10 @@ async function lookupEmployee() {
     try {
 
         const result = await sendRequest({
+
             action: "lookupEmployee",
             fullName: searchValue
+
         });
 
         // ป้องกันผลค้นหาเก่าทับผลค้นหาใหม่
@@ -208,7 +291,11 @@ async function lookupEmployee() {
         }
 
         if (!result || typeof result !== "object") {
-            throw new Error("เซิร์ฟเวอร์ส่งข้อมูลกลับมาไม่ถูกต้อง");
+
+            throw new Error(
+                "เซิร์ฟเวอร์ส่งข้อมูลกลับมาไม่ถูกต้อง"
+            );
+
         }
 
         // ไม่พบพนักงาน
@@ -217,10 +304,12 @@ async function lookupEmployee() {
             clearEmployeeData();
 
             showFullNameError(
-                result.message || "ไม่พบชื่อ-นามสกุลนี้ในระบบ กรุณาตรวจสอบชื่ออีกครั้ง"
+                result.message ||
+                "ไม่พบชื่อ-นามสกุลนี้ในระบบ กรุณาตรวจสอบชื่ออีกครั้ง"
             );
 
             return;
+
         }
 
         const employee = result.employee;
@@ -231,7 +320,11 @@ async function lookupEmployee() {
             !employee.fullName ||
             !employee.department
         ) {
-            throw new Error("ข้อมูลพนักงานที่ได้รับไม่ครบถ้วน");
+
+            throw new Error(
+                "ข้อมูลพนักงานที่ได้รับไม่ครบถ้วน"
+            );
+
         }
 
         // เติมข้อมูลจากฐานข้อมูล
@@ -254,7 +347,8 @@ async function lookupEmployee() {
         clearEmployeeData();
 
         showFullNameError(
-            error.message || "ไม่สามารถค้นหาข้อมูลพนักงานได้ กรุณาลองใหม่"
+            error.message ||
+            "ไม่สามารถค้นหาข้อมูลพนักงานได้ กรุณาลองใหม่"
         );
 
     }
@@ -312,9 +406,12 @@ function sendRequest(params) {
 
             if (!cleanup()) return;
 
-            reject(new Error("หมดเวลารอการตอบกลับจากเซิร์ฟเวอร์"));
+            reject(
+                new Error("หมดเวลารอการตอบกลับจากเซิร์ฟเวอร์")
+            );
 
         }, 25000);
+
 
         function cleanup() {
 
@@ -334,6 +431,7 @@ function sendRequest(params) {
 
         }
 
+
         window[callbackName] = function (result) {
 
             if (!cleanup()) return;
@@ -342,20 +440,27 @@ function sendRequest(params) {
 
         };
 
+
         const query = new URLSearchParams({
+
             ...params,
             callback: callbackName
+
         });
 
         script.src = SCRIPT_URL + "?" + query.toString();
+
 
         script.onerror = function () {
 
             if (!cleanup()) return;
 
-            reject(new Error("ไม่สามารถเชื่อมต่อระบบได้"));
+            reject(
+                new Error("ไม่สามารถเชื่อมต่อระบบได้")
+            );
 
         };
+
 
         document.body.appendChild(script);
 
@@ -372,6 +477,11 @@ form.addEventListener("submit", async function (event) {
 
     event.preventDefault();
 
+    // ป้องกันการกดส่งซ้ำ
+    if (isSubmitting) {
+        return;
+    }
+
     clearAllErrors();
 
     const employeeID = employeeIDInput.value.trim();
@@ -382,6 +492,7 @@ form.addEventListener("submit", async function (event) {
     const targetCustomer = targetCustomerInput.value.trim();
     const usageDetails = usageInput.value.trim();
 
+
     // ----------------------------------------------
     // ตรวจสอบข้อมูลพนักงาน
     // ----------------------------------------------
@@ -389,10 +500,13 @@ form.addEventListener("submit", async function (event) {
     if (!fullName) {
 
         showFullNameError("กรุณากรอกชื่อ-นามสกุล");
+
         fullNameInput.focus();
 
         return;
+
     }
+
 
     if (!employeeVerified || !employeeID || !department) {
 
@@ -403,7 +517,9 @@ form.addEventListener("submit", async function (event) {
         fullNameInput.focus();
 
         return;
+
     }
+
 
     // ----------------------------------------------
     // ตรวจสอบข้อมูลสินค้า
@@ -412,16 +528,24 @@ form.addEventListener("submit", async function (event) {
     if (!productName || !targetCustomer || !usageDetails) {
 
         form.reportValidity();
+
         return;
 
     }
 
+
     // ----------------------------------------------
-    // ป้องกันการกดส่งซ้ำ
+    // เริ่มส่งข้อมูล
     // ----------------------------------------------
 
+    isSubmitting = true;
+
     submitBtn.disabled = true;
-    submitText.textContent = "กำลังตรวจสอบข้อมูล...";
+    submitText.textContent = "กำลังส่งข้อมูล...";
+
+    // แสดง Popup ทันทีเมื่อเริ่มส่งข้อมูล
+    showLoadingPopup();
+
 
     try {
 
@@ -439,9 +563,15 @@ form.addEventListener("submit", async function (event) {
 
         });
 
+
         if (!result || typeof result !== "object") {
-            throw new Error("เซิร์ฟเวอร์ส่งข้อมูลกลับมาไม่ถูกต้อง");
+
+            throw new Error(
+                "เซิร์ฟเวอร์ส่งข้อมูลกลับมาไม่ถูกต้อง"
+            );
+
         }
+
 
         // ------------------------------------------
         // ตรวจสอบข้อมูลซ้ำ
@@ -452,6 +582,7 @@ form.addEventListener("submit", async function (event) {
 
         const isDuplicateProduct =
             result.duplicate === true;
+
 
         if (isDuplicateFullName || isDuplicateProduct) {
 
@@ -471,15 +602,23 @@ form.addEventListener("submit", async function (event) {
 
             }
 
+            // ปิด Popup กำลังส่ง เพื่อให้แก้ไขข้อมูลได้
+            hidePopup(true);
+
             if (isDuplicateFullName) {
+
                 fullNameInput.focus();
+
             } else {
+
                 productInput.focus();
+
             }
 
             return;
 
         }
+
 
         // ------------------------------------------
         // บันทึกสำเร็จ
@@ -495,6 +634,7 @@ form.addEventListener("submit", async function (event) {
             clearEmployeeData();
             clearAllErrors();
 
+            // เปลี่ยน Popup จากกำลังส่งเป็นส่งสำเร็จ
             showPopup(
                 result.message ||
                 "ส่งข้อมูลสำเร็จ! ระบบบันทึกข้อมูลเรียบร้อยแล้ว",
@@ -505,6 +645,7 @@ form.addEventListener("submit", async function (event) {
 
         }
 
+
         // ------------------------------------------
         // ข้อผิดพลาดอื่น
         // ------------------------------------------
@@ -513,6 +654,7 @@ form.addEventListener("submit", async function (event) {
             result.message ||
             "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง"
         );
+
 
     } catch (error) {
 
@@ -524,7 +666,10 @@ form.addEventListener("submit", async function (event) {
             "error"
         );
 
+
     } finally {
+
+        isSubmitting = false;
 
         submitBtn.disabled = false;
         submitText.textContent = "ส่งข้อมูล";
