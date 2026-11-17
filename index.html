@@ -50,45 +50,18 @@
 
       <form id="productForm">
 
-        <!-- รหัสพนักงาน -->
-        <div class="form-group">
-
-          <label for="employeeID">
-            รหัสพนักงาน <span class="required">*</span>
-          </label>
-
-          <small class="hint">
-            หมายเหตุ: สามารถกรอกรหัสพนักงานหรือชื่อ-นามสกุลอย่างใดอย่างหนึ่งได้
-            ระบบจะค้นหาและเติมข้อมูลพนักงานให้อัตโนมัติ
-          </small>
-
-          <input
-            type="text"
-            id="employeeID"
-            name="employeeID"
-            placeholder="กรอกรหัสพนักงาน"
-            maxlength="30"
-            autocomplete="off"
-            aria-describedby="employeeIDError"
-            required
-          >
-
-          <small
-            id="employeeIDError"
-            class="field-error"
-            role="alert"
-            hidden
-          ></small>
-
-        </div>
-
-
-        <!-- ชื่อ-นามสกุล -->
+        <!-- =================================
+             ชื่อ-นามสกุล
+        ================================== -->
         <div class="form-group">
 
           <label for="fullName">
             ชื่อ-นามสกุล <span class="required">*</span>
           </label>
+
+          <small class="hint">
+            หมายเหตุ: กรอกชื่อ-นามสกุล ระบบจะค้นหาและเติมรหัสพนักงานกับแผนกให้อัตโนมัติ
+          </small>
 
           <input
             type="text"
@@ -111,11 +84,42 @@
         </div>
 
 
-        <!-- แผนก -->
+        <!-- =================================
+             รหัสพนักงาน
+        ================================== -->
+        <div class="form-group">
+
+          <label for="employeeID">
+            รหัสพนักงาน
+          </label>
+
+          <input
+            type="text"
+            id="employeeID"
+            name="employeeID"
+            placeholder="ระบบจะแสดงรหัสพนักงานอัตโนมัติ"
+            maxlength="30"
+            autocomplete="off"
+            readonly
+          >
+
+          <small
+            id="employeeIDError"
+            class="field-error"
+            role="alert"
+            hidden
+          ></small>
+
+        </div>
+
+
+        <!-- =================================
+             แผนก
+        ================================== -->
         <div class="form-group">
 
           <label for="department">
-            แผนก <span class="required">*</span>
+            แผนก
           </label>
 
           <input
@@ -124,17 +128,18 @@
             name="department"
             placeholder="ระบบจะแสดงแผนกอัตโนมัติ"
             readonly
-            required
           >
 
           <small class="hint">
-            ระบบจะค้นหาแผนกจากข้อมูลพนักงานโดยอัตโนมัติ
+            ระบบจะดึงข้อมูลแผนกจากฐานข้อมูลพนักงาน
           </small>
 
         </div>
 
 
-        <!-- ชื่อสินค้า -->
+        <!-- =================================
+             ชื่อสินค้า
+        ================================== -->
         <div class="form-group">
 
           <label for="productName">
@@ -166,7 +171,9 @@
         </div>
 
 
-        <!-- ลูกค้าเป้าหมาย -->
+        <!-- =================================
+             ลูกค้าเป้าหมาย
+        ================================== -->
         <div class="form-group">
 
           <label for="targetCustomer">
@@ -185,7 +192,9 @@
         </div>
 
 
-        <!-- รายละเอียดการใช้งาน -->
+        <!-- =================================
+             รายละเอียดการใช้งาน
+        ================================== -->
         <div class="form-group">
 
           <label for="usageDetails">
@@ -204,7 +213,9 @@
         </div>
 
 
-        <!-- ปุ่มส่งข้อมูล -->
+        <!-- =================================
+             ปุ่มส่งข้อมูล
+        ================================== -->
         <button
           type="submit"
           id="submitBtn"
