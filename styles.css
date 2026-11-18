@@ -1,58 +1,496 @@
 
 /* ==================================================
-   12. POPUP LOADING
+   1. GLOBAL
 ================================================== */
 
-/* สถานะกำลังส่งข้อมูล */
-.status.loading .popup-icon {
-  width: 58px;
-  height: 58px;
-  border: 4px solid #dbeafe;
-  border-top-color: #2563eb;
-  border-radius: 50%;
-  background: transparent;
-  animation: popup-spin 0.8s linear infinite;
+* {
+  box-sizing: border-box;
 }
 
-/* วงกลม Loading */
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  background: #f3f6fb;
+  color: #1e293b;
+}
+
+/* ซ่อนหน้าที่ไม่ได้ใช้งาน */
+#welcomePage[hidden],
+#formPage[hidden],
+.status[hidden] {
+  display: none !important;
+}
+
+
+/* ==================================================
+   2. WELCOME PAGE
+================================================== */
+
+.welcome-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  background: #f3f6fb;
+}
+
+.welcome-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.welcome-image {
+  display: block;
+  width: 100%;
+  max-height: 75vh;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  margin: 0 auto 25px;
+}
+
+/* ปุ่มเข้าสู่แบบฟอร์ม */
+.enter-form-btn {
+  min-width: 220px;
+  min-height: 50px;
+  padding: 13px 35px;
+  border: none;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s, transform .2s;
+}
+
+.enter-form-btn:hover {
+  background: #1e40af;
+  transform: translateY(-2px);
+}
+
+.enter-form-btn:active {
+  transform: translateY(0);
+}
+
+.enter-form-btn:focus-visible,
+.back-home-btn:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .35);
+  outline-offset: 3px;
+}
+
+
+/* ==================================================
+   3. FORM PAGE
+================================================== */
+
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 35px 16px;
+}
+
+.form-card {
+  width: 100%;
+  max-width: 560px;
+  padding: 35px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, .08);
+}
+
+
+/* ==================================================
+   4. FORM HEADER
+================================================== */
+
+.form-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.company-name {
+  margin-bottom: 12px;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.form-header h1 {
+  margin: 0 0 10px;
+  color: #172554;
+  font-size: 25px;
+}
+
+.form-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* ปุ่มกลับหน้าหลัก */
+.back-home-btn {
+  display: block;
+  margin: 0 auto 22px;
+  padding: 9px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #fff;
+  color: #334155;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+}
+
+.back-home-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+
+/* ==================================================
+   5. FORM GROUP
+================================================== */
+
+.form-group {
+  margin-bottom: 21px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.required {
+  color: #dc2626;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #1e293b;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.form-group input,
+.form-group select {
+  height: 46px;
+}
+
+.form-group textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .10);
+}
+
+
+/* ==================================================
+   6. DUPLICATE ERROR
+================================================== */
+
+.form-group input.input-error {
+  border: 1.5px solid #dc2626;
+  background: #fff7f7;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, .08);
+}
+
+.form-group input.input-error:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, .12);
+}
+
+.field-error {
+  display: block;
+  margin-top: 7px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.field-error[hidden] {
+  display: none;
+}
+
+.hint {
+  display: block;
+  margin-top: 7px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+
+/* ==================================================
+   7. SUBMIT BUTTON
+================================================== */
+
+.submit-btn {
+  width: 100%;
+  height: 48px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s;
+}
+
+.submit-btn:hover {
+  background: #1e40af;
+}
+
+.submit-btn:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+}
+
+
+/* ==================================================
+   8. FOOTER
+================================================== */
+
+.form-footer {
+  margin-top: 25px;
+  color: #94a3b8;
+  font-size: 12px;
+  text-align: center;
+}
+
+
+/* ==================================================
+   9. POPUP
+================================================== */
+
+.status {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, .62);
+  backdrop-filter: blur(4px);
+}
+
+.popup-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 30px 25px;
+  border-radius: 16px;
+  background: #fff;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
+  animation: popupIn .2s ease;
+}
+
+.popup-icon {
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 17px;
+  border-radius: 50%;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.status.success .popup-icon {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.status.error .popup-icon {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.popup-card h2 {
+  margin: 0 0 10px;
+  color: #1e293b;
+  font-size: 21px;
+}
+
+.popup-card p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.popup-close {
+  width: 100%;
+  height: 44px;
+  margin-top: 24px;
+  border: none;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.popup-close:hover {
+  background: #1e40af;
+}
+
+.status.error .popup-close {
+  background: #dc2626;
+}
+
+/* ซ่อนปุ่มตกลงเมื่อกำลังส่ง */
+.popup-close[hidden] {
+  display: none !important;
+}
+
+
+/* ==================================================
+   10. POPUP LOADING
+================================================== */
+
+/* ซ่อนไอคอนเดิม เพื่อไม่ให้ Spinner ซ้ำ */
+.status.loading .popup-icon {
+  display: none;
+}
+
+/* กล่อง Loading */
 .loading-indicator {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 20px auto 5px;
+  margin: 22px auto 5px;
 }
 
 .loading-indicator[hidden] {
   display: none !important;
 }
 
+/* วง Spinner */
 .loading-spinner {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border: 4px solid #dbeafe;
   border-top-color: #2563eb;
   border-radius: 50%;
-  animation: popup-spin 0.8s linear infinite;
+  animation: popup-spin .8s linear infinite;
 }
 
-/* ซ่อนปุ่มตกลงระหว่างส่งข้อมูล */
-.popup-close[hidden] {
-  display: none !important;
+/* หัวข้อขณะกำลังส่ง */
+.status.loading .popup-card h2 {
+  color: #1d4ed8;
 }
 
-/* Animation */
+/* ข้อความขณะกำลังส่ง */
+.status.loading .popup-card p {
+  color: #64748b;
+}
+
+/* ป้องกันการเลือกข้อความขณะกำลังส่ง */
+.status.loading .popup-card {
+  user-select: none;
+}
+
+/* Animation Spinner */
 @keyframes popup-spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-/* สถานะกำลังส่ง */
-.status.loading .popup-card h2 {
-  color: #1d4ed8;
+
+/* ==================================================
+   11. ANIMATION
+================================================== */
+
+@keyframes popupIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-/* ป้องกันการเลือกข้อความระหว่างแสดง Loading */
-.status.loading .popup-card {
-  user-select: none;
+
+/* ==================================================
+   12. RESPONSIVE - TABLET & MOBILE
+================================================== */
+
+@media (max-width: 768px) {
+
+  .welcome-page {
+    padding: 20px 15px;
+  }
+
+  .welcome-image {
+    max-height: 70vh;
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .welcome-page {
+    padding: 15px;
+  }
+
+  .welcome-image {
+    max-height: 65vh;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+
+  .enter-form-btn {
+    width: 100%;
+  }
+
+  .page-container {
+    padding: 20px 12px;
+  }
+
+  .form-card {
+    padding: 25px 20px;
+  }
+
+  .form-header h1 {
+    font-size: 21px;
+  }
+
+  .back-home-btn {
+    margin-bottom: 18px;
+  }
+
 }
