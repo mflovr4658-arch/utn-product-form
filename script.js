@@ -384,6 +384,7 @@ fullNameInput.addEventListener("input", function () {
 productInput.addEventListener("input", clearProductError);
 
 
+
 // ==================================================
 // 7. SEND REQUEST (JSONP)
 // ==================================================
@@ -470,6 +471,97 @@ function sendRequest(params) {
 
 
 // ==================================================
+// 7.1 SEND LONG DATA IN CHUNKS
+// ==================================================
+
+async function sendChunkedRequest(params) {
+
+    // จำกัดขนาดข้อมูลที่ส่งได้
+    const MAX_DATA_LENGTH = 49900;
+
+    // แบ่งข้อมูลครั้งละ 500 ตัวอักษร
+    const CHUNK_SIZE = 500;
+
+    const payload = JSON.stringify(params);
+
+    if (payload.length > MAX_DATA_LENGTH) {
+
+        throw new Error(
+            "ข้อมูลมีขนาดใหญ่เกินไป กรุณาลดความยาวรายละเอียดการใช้งาน"
+        );
+
+    }
+
+    // Array.from ป้องกันการตัดอักขระภาษาไทยหรือ Emoji กลางตัว
+    const characters = Array.from(payload);
+
+    const chunks = [];
+
+    for (let i = 0; i < characters.length; i += CHUNK_SIZE) {
+
+        chunks.push(
+            characters.slice(i, i + CHUNK_SIZE).join("")
+        );
+
+    }
+
+    const token =
+        "product_" +
+        Date.now().toString(36) +
+        "_" +
+        Math.random().toString(36).slice(2);
+
+    let result = null;
+
+    // ส่งข้อมูลทีละชุดตามลำดับ
+    for (let i = 0; i < chunks.length; i++) {
+
+        result = await sendRequest({
+
+            action: "submitChunk",
+
+            token: token,
+
+            index: String(i),
+
+            total: String(chunks.length),
+
+            chunk: chunks[i]
+
+        });
+
+        if (!result || typeof result !== "object") {
+
+            throw new Error(
+                "เซิร์ฟเวอร์ส่งข้อมูลกลับมาไม่ถูกต้อง"
+            );
+
+        }
+
+        // ชุดที่ยังไม่ใช่ชุดสุดท้าย ต้องได้รับการยืนยัน
+        if (i < chunks.length - 1) {
+
+            if (result.success !== true || result.received !== true) {
+
+                throw new Error(
+                    result.message ||
+                    "ไม่สามารถส่งข้อมูลบางส่วนได้"
+                );
+
+            }
+
+        }
+
+    }
+
+    // ผลลัพธ์ชุดสุดท้ายคือผลการบันทึกจริง
+    return result;
+
+}
+
+
+
+// ==================================================
 // 8. FORM SUBMIT
 // ==================================================
 
@@ -549,7 +641,7 @@ form.addEventListener("submit", async function (event) {
 
     try {
 
-        const result = await sendRequest({
+       const result = await sendChunkedRequest({
 
             action: "submit",
 
