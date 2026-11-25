@@ -1,3 +1,4 @@
+
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEWHRDtzur0r4jgNQGXC6jRRGn3c4RmQqPitJFPK4Ex0LXxZujpZq545l8WurQPP4PZw/exec";
 
 // ==================================================
@@ -257,256 +258,6 @@ function clearEmployeeData() {
 
 async function lookupEmployee() {
 
-    const fullName = fullNameInput.value.trim();
-
-    if (!fullName) {
-        clearEmployeeData();
-        return;
-    }
-
-    const currentSequence = ++employeeLookupSequence;
-
-    clearEmployeeData();
-
-    try {
-
-        const result = await sendRequest({
-
-            action: "lookupEmployee",
-            fullName: fullName
-
-        });
-
-        // ป้องกันผลค้นหาเก่าทับข้อมูลใหม่
-        if (currentSequence !== employeeLookupSequence) {
-            return;
-        }
-
-        if (!result || result.success !== true || !result.employee) {
-
-            showFullNameError(
-                result && result.message
-                    ? result.message
-                    : "ไม่พบข้อมูลพนักงาน"
-            );
-
-            return;
-
-        }
-
-        employeeIDInput.value = result.employee.employeeID || "";
-        departmentInput.value = result.employee.department || "";
-
-        employeeVerified = true;
-
-        clearFullNameError();
-
-    } catch (error) {
-
-        if (currentSequence !== employeeLookupSequence) {
-            return;
-        }
-
-        showFullNameError(
-            error.message || "ไม่สามารถตรวจสอบข้อมูลพนักงานได้"
-        );
-
-    }
-
-}
-
-
-// ตรวจสอบชื่อเมื่อออกจากช่องกรอก
-fullNameInput.addEventListener("blur", function () {
-
-    if (fullNameInput.value.trim()) {
-        lookupEmployee();
-    }
-
-});
-
-
-// เมื่อแก้ไขชื่อ ให้ยกเลิกข้อมูลพนักงานเดิม
-fullNameInput.addEventListener("input", function () {
-
-    employeeLookupSequence++;
-
-    clearEmployeeData();
-    clearFullNameError();
-
-});
-
-
-// ==================================================
-// 6. PRODUCT ERROR CLEAR
-// ==================================================
-
-productInput.addEventListener("input", clearProductError);
-
-
-// ==================================================
-// 7. SEND REQUEST (JSONP)
-// ==================================================
-
-function sendRequest(params) {
-
-    return new Promise((resolve, reject) => {
-
-        const callbackName =
-            "productCallback_" +
-            Date.now() +
-            "_" +
-            Math.random().toString(36).slice(2);
-
-        const script = document.createElement("script");
-
-        let finished = false;
-
-        const timeout = setTimeout(() => {
-
-            if (!cleanup()) return;
-
-            reject(
-                new Error("หมดเวลารอการตอบกลับจากเซิร์ฟเวอร์")
-            );
-
-        }, 25000);
-
-
-        function cleanup() {
-
-            if (finished) return false;
-
-            finished = true;
-
-            clearTimeout(timeout);
-
-            delete window[callbackName];
-
-            if (script.parentNode) {
-                script.parentNode.removeChild(script);
-            }
-
-            return true;
-
-        }
-
-
-        window[callbackName] = function (result) {
-
-            if (!cleanup()) return;
-
-            resolve(result);
-
-        };
-
-
-        const query = new URLSearchParams({
-
-            ...params,
-            callback: callbackName
-
-        });
-
-        script.src = SCRIPT_URL + "?" + query.toString();
-
-
-        script.onerror = function () {
-
-            if (!cleanup()) return;
-
-            reject(
-                new Error("ไม่สามารถเชื่อมต่อระบบได้")
-            );
-
-        };
-
-
-        document.body.appendChild(script);
-
-    });
-
-}
-
-
-// ==================================================
-// 7.1 SEND LONG DATA IN CHUNKS
-// ==================================================
-
-async function sendChunkedRequest(params) {
-
-    const MAX_DATA_LENGTH = 49900;
-    const CHUNK_SIZE = 500;
-
-    const payload = JSON.stringify(params);
-
-    if (payload.length > MAX_DATA_LENGTH) {
-
-        throw new Error(
-            "ข้อมูลมีขนาดใหญ่เกินไป กรุณาลดความยาวรายละเอียดการใช้งาน"
-        );
-
-    }
-
-    const characters = Array.from(payload);
-    const chunks = [];
-
-    for (let i = 0; i < characters.length; i += CHUNK_SIZE) {
-
-        chunks.push(
-            characters.slice(i, i + CHUNK_SIZE).join("")
-        );
-
-    }
-
-    const token =
-        "product_" +
-        Date.now().toString(36) +
-        "_" +
-        Math.random().toString(36).slice(2);
-
-    let result = null;
-
-    for (let i = 0; i < chunks.length; i++) {
-
-        result = await sendRequest({
-
-            action: "submitChunk",
-            token: token,
-            index: String(i),
-            total: String(chunks.length),
-            chunk: chunks[i]
-
-        });
-
-        if (!result || typeof result !== "object") {
-
-            throw new Error(
-                "เซิร์ฟเวอร์ส่งข้อมูลกลับมาไม่ถูกต้อง"
-            );
-
-        }
-
-        if (i < chunks.length - 1) {
-
-            if (result.success !== true || result.received !== true) {
-
-                throw new Error(
-                    result.message ||
-                    "ไม่สามารถส่งข้อมูลบางส่วนได้"
-                );
-
-            }
-
-        }
-
-    }
-
-    return result;
-
-}
-async function lookupEmployee() {
-
     const searchValue = fullNameInput.value.trim();
 
     if (!searchValue) {
@@ -624,6 +375,8 @@ fullNameInput.addEventListener("input", function () {
     clearFullNameError();
 
 });
+
+
 // ==================================================
 // 6. PRODUCT ERROR CLEAR
 // ==================================================
@@ -848,7 +601,7 @@ function ensureImageUploadUI() {
     title.style.cssText = "display:block;font-weight:600;margin-bottom:8px";
 
     const note = document.createElement("p");
-    note.textContent = "รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 20 MB ";
+    note.textContent = "รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 20 MB ต่อรูป";
     note.style.cssText = "font-size:13px;color:#64748b;margin:0 0 10px";
 
     imageInput = document.createElement("input");
@@ -944,25 +697,14 @@ productImageInput.addEventListener("change", function() {
     });
 
     if (invalid) {
-    productImageInput.value = "";
-
-    let message = "";
-
-    if (!ALLOWED_IMAGE_TYPES.includes(invalid.type)) {
-        message = "รองรับเฉพาะไฟล์ JPG, PNG และ WEBP";
-    } else if (invalid.size <= 0) {
-        message = "ไฟล์รูปภาพไม่มีข้อมูล";
-    } else if (invalid.size > MAX_IMAGE_SIZE) {
-        message = "ขนาดรูปภาพต้องไม่เกิน 20 MB ต่อรูป";
+        productImageInput.value = "";
+        showPopup(
+            "ไฟล์ " + invalid.name +
+            " ไม่ถูกต้อง รองรับ JPG, PNG, WEBP และขนาดไม่เกิน 20 MB ต่อรูป",
+            "error"
+        );
+        return;
     }
-
-    showPopup(
-        "ไฟล์ " + invalid.name + " ไม่ถูกต้อง: " + message,
-        "error"
-    );
-
-    return;
-}
 
     // เปลี่ยนชุดรูปที่เลือกใหม่ทั้งหมด
     clearSelectedProductImages();
@@ -978,6 +720,7 @@ productImageInput.addEventListener("change", function() {
     productImageInput.value = "";
     renderSelectedProductImages();
 });
+
 function readFileAsDataURL(file) {
     return new Promise(function(resolve, reject) {
         const reader = new FileReader();
@@ -1160,7 +903,6 @@ form.addEventListener("submit", async function (event) {
        const uploadedImages = selectedProductImages.length > 0
            ? await uploadSelectedProductImages(employeeID)
            : [];
-
        const imageFileIds = uploadedImages.map(function(item) {
            return item.fileId;
        }).filter(Boolean).join(',');
