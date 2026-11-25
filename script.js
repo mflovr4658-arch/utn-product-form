@@ -815,7 +815,7 @@ async function sendChunkedRequest(params) {
 // ==================================================
 
 const MAX_IMAGE_COUNT = 3;
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 let selectedProductImages = [];
