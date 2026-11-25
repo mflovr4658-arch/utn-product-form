@@ -848,7 +848,7 @@ function ensureImageUploadUI() {
     title.style.cssText = "display:block;font-weight:600;margin-bottom:8px";
 
     const note = document.createElement("p");
-    note.textContent = "รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 2 MB ต่อรูป";
+    note.textContent = "รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 20 MB ";
     note.style.cssText = "font-size:13px;color:#64748b;margin:0 0 10px";
 
     imageInput = document.createElement("input");
@@ -944,14 +944,25 @@ productImageInput.addEventListener("change", function() {
     });
 
     if (invalid) {
-        productImageInput.value = "";
-        showPopup(
-            "ไฟล์ " + invalid.name +
-            " ไม่ถูกต้อง รองรับ JPG, PNG, WEBP และขนาดไม่เกิน 2 MB ต่อรูป",
-            "error"
-        );
-        return;
+    productImageInput.value = "";
+
+    let message = "";
+
+    if (!ALLOWED_IMAGE_TYPES.includes(invalid.type)) {
+        message = "รองรับเฉพาะไฟล์ JPG, PNG และ WEBP";
+    } else if (invalid.size <= 0) {
+        message = "ไฟล์รูปภาพไม่มีข้อมูล";
+    } else if (invalid.size > MAX_IMAGE_SIZE) {
+        message = "ขนาดรูปภาพต้องไม่เกิน 20 MB ต่อรูป";
     }
+
+    showPopup(
+        "ไฟล์ " + invalid.name + " ไม่ถูกต้อง: " + message,
+        "error"
+    );
+
+    return;
+}
 
     // เปลี่ยนชุดรูปที่เลือกใหม่ทั้งหมด
     clearSelectedProductImages();
