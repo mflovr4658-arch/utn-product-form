@@ -201,6 +201,47 @@
         </div>
 
 
+        <!-- =================================
+             รูปภาพประกอบข้อเสนอสินค้า
+        ================================== -->
+        <div class="form-group image-upload-group">
+
+          <label for="productImages">
+            รูปภาพประกอบข้อเสนอสินค้า
+          </label>
+
+          <small class="hint">
+            สามารถแนบรูปภาพได้สูงสุด 3 รูปต่อข้อเสนอ
+            รองรับ JPG, PNG และ WEBP ขนาดไม่เกิน 2 MB ต่อรูป
+          </small>
+
+          <div class="image-upload-box">
+
+            <input
+              type="file"
+              id="productImages"
+              name="productImages"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              aria-describedby="imageUploadHint"
+            >
+
+            <small id="imageUploadHint" class="hint">
+              เลือกรูปภาพจากอุปกรณ์ของคุณ
+            </small>
+
+          </div>
+
+          <!-- ภาพตัวอย่างก่อนส่ง -->
+          <div
+            id="imagePreview"
+            class="image-preview"
+            aria-live="polite"
+          ></div>
+
+        </div>
+
+
         <!-- ปุ่มส่งข้อมูล -->
         <button
           type="submit"
