@@ -1,4 +1,3 @@
-
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEWHRDtzur0r4jgNQGXC6jRRGn3c4RmQqPitJFPK4Ex0LXxZujpZq545l8WurQPP4PZw/exec";
 
 // ==================================================
@@ -258,6 +257,256 @@ function clearEmployeeData() {
 
 async function lookupEmployee() {
 
+    const fullName = fullNameInput.value.trim();
+
+    if (!fullName) {
+        clearEmployeeData();
+        return;
+    }
+
+    const currentSequence = ++employeeLookupSequence;
+
+    clearEmployeeData();
+
+    try {
+
+        const result = await sendRequest({
+
+            action: "lookupEmployee",
+            fullName: fullName
+
+        });
+
+        // ป้องกันผลค้นหาเก่าทับข้อมูลใหม่
+        if (currentSequence !== employeeLookupSequence) {
+            return;
+        }
+
+        if (!result || result.success !== true || !result.employee) {
+
+            showFullNameError(
+                result && result.message
+                    ? result.message
+                    : "ไม่พบข้อมูลพนักงาน"
+            );
+
+            return;
+
+        }
+
+        employeeIDInput.value = result.employee.employeeID || "";
+        departmentInput.value = result.employee.department || "";
+
+        employeeVerified = true;
+
+        clearFullNameError();
+
+    } catch (error) {
+
+        if (currentSequence !== employeeLookupSequence) {
+            return;
+        }
+
+        showFullNameError(
+            error.message || "ไม่สามารถตรวจสอบข้อมูลพนักงานได้"
+        );
+
+    }
+
+}
+
+
+// ตรวจสอบชื่อเมื่อออกจากช่องกรอก
+fullNameInput.addEventListener("blur", function () {
+
+    if (fullNameInput.value.trim()) {
+        lookupEmployee();
+    }
+
+});
+
+
+// เมื่อแก้ไขชื่อ ให้ยกเลิกข้อมูลพนักงานเดิม
+fullNameInput.addEventListener("input", function () {
+
+    employeeLookupSequence++;
+
+    clearEmployeeData();
+    clearFullNameError();
+
+});
+
+
+// ==================================================
+// 6. PRODUCT ERROR CLEAR
+// ==================================================
+
+productInput.addEventListener("input", clearProductError);
+
+
+// ==================================================
+// 7. SEND REQUEST (JSONP)
+// ==================================================
+
+function sendRequest(params) {
+
+    return new Promise((resolve, reject) => {
+
+        const callbackName =
+            "productCallback_" +
+            Date.now() +
+            "_" +
+            Math.random().toString(36).slice(2);
+
+        const script = document.createElement("script");
+
+        let finished = false;
+
+        const timeout = setTimeout(() => {
+
+            if (!cleanup()) return;
+
+            reject(
+                new Error("หมดเวลารอการตอบกลับจากเซิร์ฟเวอร์")
+            );
+
+        }, 25000);
+
+
+        function cleanup() {
+
+            if (finished) return false;
+
+            finished = true;
+
+            clearTimeout(timeout);
+
+            delete window[callbackName];
+
+            if (script.parentNode) {
+                script.parentNode.removeChild(script);
+            }
+
+            return true;
+
+        }
+
+
+        window[callbackName] = function (result) {
+
+            if (!cleanup()) return;
+
+            resolve(result);
+
+        };
+
+
+        const query = new URLSearchParams({
+
+            ...params,
+            callback: callbackName
+
+        });
+
+        script.src = SCRIPT_URL + "?" + query.toString();
+
+
+        script.onerror = function () {
+
+            if (!cleanup()) return;
+
+            reject(
+                new Error("ไม่สามารถเชื่อมต่อระบบได้")
+            );
+
+        };
+
+
+        document.body.appendChild(script);
+
+    });
+
+}
+
+
+// ==================================================
+// 7.1 SEND LONG DATA IN CHUNKS
+// ==================================================
+
+async function sendChunkedRequest(params) {
+
+    const MAX_DATA_LENGTH = 49900;
+    const CHUNK_SIZE = 500;
+
+    const payload = JSON.stringify(params);
+
+    if (payload.length > MAX_DATA_LENGTH) {
+
+        throw new Error(
+            "ข้อมูลมีขนาดใหญ่เกินไป กรุณาลดความยาวรายละเอียดการใช้งาน"
+        );
+
+    }
+
+    const characters = Array.from(payload);
+    const chunks = [];
+
+    for (let i = 0; i < characters.length; i += CHUNK_SIZE) {
+
+        chunks.push(
+            characters.slice(i, i + CHUNK_SIZE).join("")
+        );
+
+    }
+
+    const token =
+        "product_" +
+        Date.now().toString(36) +
+        "_" +
+        Math.random().toString(36).slice(2);
+
+    let result = null;
+
+    for (let i = 0; i < chunks.length; i++) {
+
+        result = await sendRequest({
+
+            action: "submitChunk",
+            token: token,
+            index: String(i),
+            total: String(chunks.length),
+            chunk: chunks[i]
+
+        });
+
+        if (!result || typeof result !== "object") {
+
+            throw new Error(
+                "เซิร์ฟเวอร์ส่งข้อมูลกลับมาไม่ถูกต้อง"
+            );
+
+        }
+
+        if (i < chunks.length - 1) {
+
+            if (result.success !== true || result.received !== true) {
+
+                throw new Error(
+                    result.message ||
+                    "ไม่สามารถส่งข้อมูลบางส่วนได้"
+                );
+
+            }
+
+        }
+
+    }
+
+    return result;
+
+}
+async function lookupEmployee() {
+
     const searchValue = fullNameInput.value.trim();
 
     if (!searchValue) {
@@ -375,8 +624,6 @@ fullNameInput.addEventListener("input", function () {
     clearFullNameError();
 
 });
-
-
 // ==================================================
 // 6. PRODUCT ERROR CLEAR
 // ==================================================
@@ -561,6 +808,263 @@ async function sendChunkedRequest(params) {
 
 
 
+
+// ==================================================
+// 7.2 PRODUCT IMAGE UPLOAD
+// เชื่อมต่อกับ doPost(action=uploadImage) ใน Google Apps Script
+// ==================================================
+
+const MAX_IMAGE_COUNT = 3;
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+let selectedProductImages = [];
+
+function ensureImageUploadUI() {
+    // หากหน้า HTML มีช่องอัปโหลดอยู่แล้ว ให้ใช้ของเดิม
+    let imageInput = document.getElementById("productImages") ||
+                     document.getElementById("imageFiles");
+    let preview = document.getElementById("imagePreview");
+
+    if (imageInput && preview) {
+        imageInput.multiple = true;
+        imageInput.accept = "image/jpeg,image/png,image/webp";
+        return { imageInput, preview };
+    }
+
+    const section = document.createElement("section");
+    section.id = "productImageUpload";
+    section.style.cssText = [
+        "margin:20px 0",
+        "padding:16px",
+        "border:1px solid #d8dee8",
+        "border-radius:12px",
+        "background:#fafbfc"
+    ].join(";");
+
+    const title = document.createElement("label");
+    title.htmlFor = "productImages";
+    title.textContent = "รูปภาพประกอบข้อเสนอสินค้า (ไม่เกิน 3 รูป)";
+    title.style.cssText = "display:block;font-weight:600;margin-bottom:8px";
+
+    const note = document.createElement("p");
+    note.textContent = "รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 2 MB ต่อรูป";
+    note.style.cssText = "font-size:13px;color:#64748b;margin:0 0 10px";
+
+    imageInput = document.createElement("input");
+    imageInput.type = "file";
+    imageInput.id = "productImages";
+    imageInput.name = "productImages";
+    imageInput.multiple = true;
+    imageInput.accept = "image/jpeg,image/png,image/webp";
+    imageInput.style.cssText = "display:block;width:100%;max-width:100%";
+
+    preview = document.createElement("div");
+    preview.id = "imagePreview";
+    preview.style.cssText = "display:flex;flex-wrap:wrap;gap:10px;margin-top:12px";
+
+    section.append(title, note, imageInput, preview);
+
+    const insertPoint = submitBtn && submitBtn.parentElement
+        ? submitBtn.parentElement
+        : null;
+
+    if (insertPoint && insertPoint !== form) {
+        form.insertBefore(section, insertPoint);
+    } else {
+        form.appendChild(section);
+    }
+
+    return { imageInput, preview };
+}
+
+const imageUploadElements = ensureImageUploadUI();
+const productImageInput = imageUploadElements.imageInput;
+const productImagePreview = imageUploadElements.preview;
+
+function clearSelectedProductImages() {
+    selectedProductImages.forEach(function(item) {
+        if (item.previewURL) URL.revokeObjectURL(item.previewURL);
+    });
+
+    selectedProductImages = [];
+    if (productImageInput) productImageInput.value = "";
+    if (productImagePreview) productImagePreview.replaceChildren();
+}
+
+function renderSelectedProductImages() {
+    productImagePreview.replaceChildren();
+
+    selectedProductImages.forEach(function(item, index) {
+        const card = document.createElement("div");
+        card.style.cssText =
+            "width:104px;padding:6px;border:1px solid #e2e8f0;border-radius:8px;background:#fff";
+
+        const img = document.createElement("img");
+        img.src = item.previewURL;
+        img.alt = item.file.name;
+        img.style.cssText =
+            "width:100%;height:76px;object-fit:cover;border-radius:5px";
+
+        const name = document.createElement("div");
+        name.textContent = item.file.name;
+        name.title = item.file.name;
+        name.style.cssText =
+            "font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:5px";
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "ลบ";
+        remove.style.cssText =
+            "margin-top:5px;font-size:12px;cursor:pointer";
+        remove.addEventListener("click", function() {
+            URL.revokeObjectURL(item.previewURL);
+            selectedProductImages.splice(index, 1);
+            renderSelectedProductImages();
+        });
+
+        card.append(img, name, remove);
+        productImagePreview.appendChild(card);
+    });
+}
+
+productImageInput.addEventListener("change", function() {
+    const files = Array.from(productImageInput.files || []);
+
+    if (files.length > MAX_IMAGE_COUNT) {
+        productImageInput.value = "";
+        showPopup("แนบรูปภาพได้สูงสุด " + MAX_IMAGE_COUNT + " รูป", "error");
+        return;
+    }
+
+    const invalid = files.find(function(file) {
+        return !ALLOWED_IMAGE_TYPES.includes(file.type) ||
+               file.size <= 0 ||
+               file.size > MAX_IMAGE_SIZE;
+    });
+
+    if (invalid) {
+        productImageInput.value = "";
+        showPopup(
+            "ไฟล์ " + invalid.name +
+            " ไม่ถูกต้อง รองรับ JPG, PNG, WEBP และขนาดไม่เกิน 2 MB ต่อรูป",
+            "error"
+        );
+        return;
+    }
+
+    // เปลี่ยนชุดรูปที่เลือกใหม่ทั้งหมด
+    clearSelectedProductImages();
+
+    selectedProductImages = files.map(function(file) {
+        return {
+            file: file,
+            previewURL: URL.createObjectURL(file)
+        };
+    });
+
+    // อนุญาตให้เลือกชุดเดิมซ้ำได้ในครั้งถัดไป
+    productImageInput.value = "";
+    renderSelectedProductImages();
+});
+function readFileAsDataURL(file) {
+    return new Promise(function(resolve, reject) {
+        const reader = new FileReader();
+
+        reader.onload = function() {
+            resolve(String(reader.result || ""));
+        };
+
+        reader.onerror = function() {
+            reject(new Error("ไม่สามารถอ่านไฟล์ " + file.name + " ได้"));
+        };
+
+        reader.readAsDataURL(file);
+    });
+}
+
+async function uploadOneProductImage(employeeID, file) {
+    const dataURL = await readFileAsDataURL(file);
+
+    // URLSearchParams จะ encode Base64 สำหรับ application/x-www-form-urlencoded
+    const body = new URLSearchParams();
+    body.set("action", "uploadImage");
+    body.set("employeeID", employeeID);
+    body.set("fileName", file.name);
+    body.set("mimeType", file.type);
+    body.set("base64", dataURL);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(function() {
+        controller.abort();
+    }, 90000);
+
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+            },
+            body: body.toString(),
+            redirect: "follow",
+            signal: controller.signal
+        });
+
+        if (!response.ok) {
+            throw new Error("เซิร์ฟเวอร์อัปโหลดรูปภาพตอบกลับ HTTP " + response.status);
+        }
+
+        const result = await response.json();
+
+        if (!result || result.success !== true) {
+            throw new Error(
+                result && result.message
+                    ? result.message
+                    : "อัปโหลดรูปภาพไม่สำเร็จ"
+            );
+        }
+
+        return result;
+
+    } catch (error) {
+        if (error.name === "AbortError") {
+            throw new Error("หมดเวลารออัปโหลดรูปภาพ " + file.name);
+        }
+
+        // หากเป็น CORS error จะไม่สามารถยืนยันผลการอัปโหลดจาก Browser ได้
+        if (error instanceof TypeError) {
+            throw new Error(
+                "เบราว์เซอร์ไม่อนุญาตให้อ่านผลตอบกลับจาก Google Apps Script (อาจเป็นปัญหา CORS) " +
+                "จึงยังยืนยันการอัปโหลดรูปภาพไม่ได้ กรุณาตรวจสอบการตั้งค่า Web App"
+            );
+        }
+
+        throw error;
+
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+async function uploadSelectedProductImages(employeeID) {
+    const results = [];
+
+    for (let i = 0; i < selectedProductImages.length; i++) {
+        const item = selectedProductImages[i];
+
+        popupTitle.textContent = "กำลังอัปโหลดรูปภาพ...";
+        popupMessage.textContent =
+            "กำลังอัปโหลดรูปที่ " + (i + 1) + " จาก " +
+            selectedProductImages.length + " รูป กรุณารอสักครู่";
+
+        const result = await uploadOneProductImage(employeeID, item.file);
+        results.push(result);
+    }
+
+    return results;
+}
+
+
 // ==================================================
 // 8. FORM SUBMIT
 // ==================================================
@@ -641,6 +1145,19 @@ form.addEventListener("submit", async function (event) {
 
     try {
 
+       // อัปโหลดรูปภาพก่อนบันทึกข้อเสนอ (ถ้ามี)
+       const uploadedImages = selectedProductImages.length > 0
+           ? await uploadSelectedProductImages(employeeID)
+           : [];
+
+       const imageFileIds = uploadedImages.map(function(item) {
+           return item.fileId;
+       }).filter(Boolean).join(',');
+
+       popupTitle.textContent = "กำลังส่งข้อมูล...";
+       popupMessage.textContent =
+           "กรุณารอสักครู่ ระบบกำลังบันทึกข้อมูลของคุณ";
+
        const result = await sendChunkedRequest({
 
             action: "submit",
@@ -651,7 +1168,8 @@ form.addEventListener("submit", async function (event) {
 
             productName: productName,
             targetCustomer: targetCustomer,
-            usageDetails: usageDetails
+            usageDetails: usageDetails,
+            imageFileIds: imageFileIds
 
         });
 
@@ -719,6 +1237,7 @@ form.addEventListener("submit", async function (event) {
         if (result.success === true) {
 
             form.reset();
+            clearSelectedProductImages();
 
             employeeVerified = false;
             employeeLookupSequence++;
