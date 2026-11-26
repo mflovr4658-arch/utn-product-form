@@ -601,7 +601,7 @@ function ensureImageUploadUI() {
     title.style.cssText = "display:block;font-weight:600;margin-bottom:8px";
 
     const note = document.createElement("p");
-    note.textContent = "ต้นฉบับ JPG, PNG, WEBP ไม่เกิน 20 MB ต่อรูป (เก็บคุณภาพเดิม) ระบบสร้างภาพตัวอย่างสำหรับ Google Sheets ให้อัตโนมัติ";
+    note.textContent = "รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 20 MB ต่อรูป";
     note.style.cssText = "font-size:13px;color:#64748b;margin:0 0 10px";
 
     imageInput = document.createElement("input");
@@ -737,11 +737,21 @@ function readFileAsDataURL(file) {
     });
 }
 
-async function postImagePayload(body, fileLabel) {
+async function uploadOneProductImage(employeeID, file) {
+    const dataURL = await readFileAsDataURL(file);
+
+    // URLSearchParams จะ encode Base64 สำหรับ application/x-www-form-urlencoded
+    const body = new URLSearchParams();
+    body.set("action", "uploadImage");
+    body.set("employeeID", employeeID);
+    body.set("fileName", file.name);
+    body.set("mimeType", file.type);
+    body.set("base64", dataURL);
+
     const controller = new AbortController();
     const timeout = setTimeout(function() {
         controller.abort();
-    }, 150000);
+    }, 90000);
 
     try {
         const response = await fetch(SCRIPT_URL, {
@@ -759,144 +769,35 @@ async function postImagePayload(body, fileLabel) {
         }
 
         const result = await response.json();
+
         if (!result || result.success !== true) {
-            throw new Error(result && result.message ? result.message : "อัปโหลดรูปภาพไม่สำเร็จ");
+            throw new Error(
+                result && result.message
+                    ? result.message
+                    : "อัปโหลดรูปภาพไม่สำเร็จ"
+            );
         }
+
         return result;
 
     } catch (error) {
         if (error.name === "AbortError") {
-            throw new Error("หมดเวลารออัปโหลด " + fileLabel);
+            throw new Error("หมดเวลารออัปโหลดรูปภาพ " + file.name);
         }
+
+        // หากเป็น CORS error จะไม่สามารถยืนยันผลการอัปโหลดจาก Browser ได้
         if (error instanceof TypeError) {
             throw new Error(
-                "เบราว์เซอร์ไม่สามารถอ่านผลตอบกลับจาก Google Apps Script ได้ (อาจเป็นปัญหา CORS) " +
-                "กรุณาตรวจสอบการตั้งค่า Web App"
+                "เบราว์เซอร์ไม่อนุญาตให้อ่านผลตอบกลับจาก Google Apps Script (อาจเป็นปัญหา CORS) " +
+                "จึงยังยืนยันการอัปโหลดรูปภาพไม่ได้ กรุณาตรวจสอบการตั้งค่า Web App"
             );
         }
+
         throw error;
+
     } finally {
         clearTimeout(timeout);
     }
-}
-
-// อัปโหลดไฟล์ต้นฉบับโดยไม่บีบอัด (สูงสุด 20 MB)
-async function uploadOneProductImage(employeeID, file) {
-    const dataURL = await readFileAsDataURL(file);
-    const body = new URLSearchParams();
-    body.set("action", "uploadImage");
-    body.set("employeeID", employeeID);
-    body.set("fileName", file.name);
-    body.set("mimeType", file.type);
-    body.set("base64", dataURL);
-    return await postImagePayload(body, "รูปต้นฉบับ " + file.name);
-}
-
-function canvasToBlob(canvas, type, quality) {
-    return new Promise(function(resolve, reject) {
-        canvas.toBlob(function(blob) {
-            if (blob) resolve(blob);
-            else reject(new Error("เบราว์เซอร์ไม่สามารถสร้างภาพตัวอย่างได้"));
-        }, type, quality);
-    });
-}
-
-async function loadImageForCompression(file) {
-    if (typeof createImageBitmap === "function") {
-        try {
-            const bitmap = await createImageBitmap(file);
-            return {
-                width: bitmap.width,
-                height: bitmap.height,
-                draw: function(ctx, width, height) { ctx.drawImage(bitmap, 0, 0, width, height); },
-                close: function() { if (bitmap.close) bitmap.close(); }
-            };
-        } catch (error) {
-            // ใช้ HTMLImageElement เป็น fallback สำหรับ browser ที่ decode บาง format ไม่ได้
-        }
-    }
-
-    const objectURL = URL.createObjectURL(file);
-    try {
-        const img = await new Promise(function(resolve, reject) {
-            const image = new Image();
-            image.onload = function() { resolve(image); };
-            image.onerror = function() { reject(new Error("ไม่สามารถเปิดรูป " + file.name + " เพื่อบีบอัดได้")); };
-            image.src = objectURL;
-        });
-        return {
-            width: img.naturalWidth,
-            height: img.naturalHeight,
-            draw: function(ctx, width, height) { ctx.drawImage(img, 0, 0, width, height); },
-            close: function() {}
-        };
-    } finally {
-        URL.revokeObjectURL(objectURL);
-    }
-}
-
-// สร้าง Preview JPEG แยกจากต้นฉบับ: ไม่เกิน 1 ล้านพิกเซล และไม่เกิน 2 MB
-async function createCompressedProductPreview(file) {
-    const MAX_PREVIEW_BYTES = 1.8 * 1024 * 1024; // เผื่อ Base64/การส่งผ่าน Apps Script
-    const MAX_PREVIEW_PIXELS = 1000000;
-    const MAX_PREVIEW_SIDE = 1200;
-    const source = await loadImageForCompression(file);
-
-    try {
-        const sourcePixels = source.width * source.height;
-        const scale = Math.min(
-            1,
-            Math.sqrt(MAX_PREVIEW_PIXELS / sourcePixels),
-            MAX_PREVIEW_SIDE / Math.max(source.width, source.height)
-        );
-
-        let width = Math.max(1, Math.floor(source.width * scale));
-        let height = Math.max(1, Math.floor(source.height * scale));
-
-        for (let attempt = 0; attempt < 12; attempt++) {
-            const canvas = document.createElement("canvas");
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext("2d", { alpha: false });
-            if (!ctx) throw new Error("ไม่สามารถเริ่ม Canvas สำหรับบีบอัดรูปได้");
-
-            // พื้นหลังสีขาว เพื่อรักษาการแสดงผล PNG ที่มี Transparency เมื่อแปลงเป็น JPEG
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, width, height);
-            source.draw(ctx, width, height);
-
-            let quality = 0.86;
-            let blob = await canvasToBlob(canvas, "image/jpeg", quality);
-            while (blob.size > MAX_PREVIEW_BYTES && quality > 0.50) {
-                quality -= 0.08;
-                blob = await canvasToBlob(canvas, "image/jpeg", quality);
-            }
-
-            if (blob.size <= MAX_PREVIEW_BYTES && width * height <= MAX_PREVIEW_PIXELS) {
-                return blob;
-            }
-
-            width = Math.max(1, Math.floor(width * 0.82));
-            height = Math.max(1, Math.floor(height * 0.82));
-        }
-
-        throw new Error("ไม่สามารถบีบอัดภาพตัวอย่างให้ต่ำกว่า 2 MB ได้");
-    } finally {
-        source.close();
-    }
-}
-
-// อัปโหลด Preview แยกหลังจากต้นฉบับถูกบันทึกใน Drive แล้ว
-async function uploadOneProductPreview(employeeID, uploadToken, originalFile, previewBlob) {
-    const dataURL = await readFileAsDataURL(previewBlob);
-    const body = new URLSearchParams();
-    body.set("action", "uploadPreview");
-    body.set("employeeID", employeeID);
-    body.set("uploadToken", uploadToken);
-    body.set("fileName", originalFile.name.replace(/\.[^.]*$/, "") + "_preview.jpg");
-    body.set("mimeType", "image/jpeg");
-    body.set("base64", dataURL);
-    return await postImagePayload(body, "ภาพตัวอย่าง " + originalFile.name);
 }
 
 async function uploadSelectedProductImages(employeeID) {
@@ -904,36 +805,14 @@ async function uploadSelectedProductImages(employeeID) {
 
     for (let i = 0; i < selectedProductImages.length; i++) {
         const item = selectedProductImages[i];
-        const progress = "รูปที่ " + (i + 1) + " จาก " + selectedProductImages.length;
 
-        popupTitle.textContent = "กำลังอัปโหลดรูปต้นฉบับ...";
-        popupMessage.textContent = progress + " กำลังบันทึกไฟล์ต้นฉบับโดยไม่ลดคุณภาพ";
-        const originalResult = await uploadOneProductImage(employeeID, item.file);
+        popupTitle.textContent = "กำลังอัปโหลดรูปภาพ...";
+        popupMessage.textContent =
+            "กำลังอัปโหลดรูปที่ " + (i + 1) + " จาก " +
+            selectedProductImages.length + " รูป กรุณารอสักครู่";
 
-        if (!originalResult.uploadToken) {
-            throw new Error("อัปโหลดต้นฉบับสำเร็จ แต่ไม่ได้รับ Upload Token สำหรับสร้างภาพตัวอย่าง");
-        }
-
-        popupTitle.textContent = "กำลังบีบอัดภาพตัวอย่าง...";
-        popupMessage.textContent = progress + " กำลังสร้างภาพตัวอย่างไม่เกิน 2 MB";
-        const previewBlob = await createCompressedProductPreview(item.file);
-
-        popupTitle.textContent = "กำลังอัปโหลดภาพตัวอย่าง...";
-        popupMessage.textContent = progress + " กำลังส่งภาพตัวอย่างไปยัง Google Drive";
-        const previewResult = await uploadOneProductPreview(
-            employeeID,
-            originalResult.uploadToken,
-            item.file,
-            previewBlob
-        );
-
-        results.push({
-            fileId: originalResult.fileId,
-            uploadToken: originalResult.uploadToken,
-            previewFileId: previewResult.previewFileId,
-            originalSize: originalResult.size,
-            previewSize: previewResult.size
-        });
+        const result = await uploadOneProductImage(employeeID, item.file);
+        results.push(result);
     }
 
     return results;
@@ -1027,9 +906,6 @@ form.addEventListener("submit", async function (event) {
        const imageFileIds = uploadedImages.map(function(item) {
            return item.fileId;
        }).filter(Boolean).join(',');
-       const imageUploadTokens = uploadedImages.map(function(item) {
-           return item.uploadToken;
-       }).filter(Boolean).join(',');
 
        popupTitle.textContent = "กำลังส่งข้อมูล...";
        popupMessage.textContent =
@@ -1046,8 +922,7 @@ form.addEventListener("submit", async function (event) {
             productName: productName,
             targetCustomer: targetCustomer,
             usageDetails: usageDetails,
-            imageFileIds: imageFileIds,
-            imageUploadTokens: imageUploadTokens
+            imageFileIds: imageFileIds
 
         });
 
